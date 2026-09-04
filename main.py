@@ -86,8 +86,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount Jinja2 templates
+# Mount Jinja2 templates and Static assets
 templates = Jinja2Templates(directory="templates")
+os.makedirs("static", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Register Feature APIRouters
 app.include_router(auth_router)
