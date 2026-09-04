@@ -1,0 +1,10 @@
+{
+    "transaction_id": "Invoice.Reference",
+    "company_name": "Invoice.Contact.Name",
+    "customer_first_name": "Invoice.Contact.FirstName",
+    "customer_last_name": "Invoice.Contact.LastName",
+    "email_address": "Invoice.Contact.EmailAddress",
+    "item_description": "Invoice.LineItems[0].Description",
+    "quantity": "Invoice.LineItems[0].Quantity",
+    "unit_price": "Invoice.LineItems[0].UnitAmount"
+}

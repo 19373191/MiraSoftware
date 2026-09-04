@@ -1,0 +1,26 @@
+{
+    "system_info": {
+        "application": "M.I.R.A. (Middleware for Integration and Real-time Automation)",
+        "benchmark_module": "Transformation Engine & Schemas",
+        "timestamp": "2026-08-29T20:58:45.372022+00:00",
+        "total_records_processed": 500,
+        "batch_size": 50,
+        "total_batches_processed": 10
+    },
+    "performance_metrics": {
+        "total_execution_time_seconds": 0.1506,
+        "median_latency_per_record_ms": 0.156,
+        "mean_latency_per_record_ms": 0.3002,
+        "p95_latency_per_record_ms": 0.7289,
+        "throughput_records_per_second": 3320.04,
+        "batch_grouping_execution_seconds": 0.1111
+    },
+    "accuracy_metrics": {
+        "successful_transformations": 500,
+        "failed_transformations": 0,
+        "payload_accuracy_percentage": 100.0,
+        "target_accuracy_threshold_percentage": 99.0,
+        "target_accuracy_met": true
+    },
+    "failed_records_log": []
+}

@@ -1,0 +1,1672 @@
+{% extends "base.html" %}
+
+{% block title %}Mapping Configuration - M.I.R.A.{% endblock %}
+
+{% block content %}
+<div class="h-[calc(100vh-140px)] flex flex-col bg-white border border-slate-150 rounded-2xl overflow-hidden shadow-sm font-sans">
+    
+    <!-- Top Header Bar -->
+    <header class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
+        <div class="flex items-center space-x-3">
+            <!-- Purple Circle Logo with "M" inside -->
+            <div class="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-extrabold text-lg shadow-sm shadow-indigo-600/30">
+                M
+            </div>
+            <div class="flex flex-col">
+                <span class="text-sm font-bold text-slate-800 tracking-tight">Mapping</span>
+                <span class="text-[10px] font-semibold text-slate-400">Xero Source &rarr; Monday.com Targets</span>
+            </div>
+        </div>
+
+        <!-- Mappings Reset and Schema Version info -->
+        <div class="hidden lg:flex items-center space-x-4">
+            <span class="px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100 text-slate-500 text-[10px] font-bold font-mono">
+                Schema: {{ mapping_version }}
+            </span>
+            <button type="button" onclick="resetToDefaults()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 active:bg-slate-100 transition-colors shadow-xs cursor-pointer">
+                Reset to Defaults
+            </button>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <button onclick="window.location.href='/sync'" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-all cursor-pointer">
+                Close
+            </button>
+            <button onclick="submitMappingsForm()" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-600/20 rounded-lg transition-all cursor-pointer">
+                Save
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Area -->
+    <div class="flex-grow flex overflow-hidden relative">
+        
+        <!-- Left Panel: Target Schema Fields -->
+        <div class="flex-grow flex flex-col overflow-y-auto bg-slate-50/30">
+            
+            <!-- Workspace Sub-Header Controls -->
+            <div class="flex items-center justify-between px-6 py-3 bg-white border-b border-slate-100 gap-4">
+                <div class="relative w-72">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </span>
+                    <input type="text" id="target-search" oninput="filterTargets()" placeholder="Search target fields..." class="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-indigo-600 focus:border-indigo-600 bg-white transition-all">
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="autoMatchFields()" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-emerald-200 bg-emerald-50/20 text-emerald-700 hover:bg-emerald-50 transition-colors shadow-2xs cursor-pointer flex items-center space-x-1">
+                        <span> Auto Match</span>
+                    </button>
+                    <button type="button" onclick="toggleUnmappedOnly()" id="btn-display-toggle" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer flex items-center space-x-1">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        <span>Display: All</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Target Board Parameters Header -->
+            <div class="px-6 py-4 bg-white border-b border-slate-100 flex flex-col space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Target monday.com Boards Selection</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- Board ID -->
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Board ID</label>
+                        <div class="flex items-center space-x-2">
+                            <select id="board-select-1" onchange="updateBoardField(1, this.value); loadMondayBoardColumns(this.value);" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-indigo-600 bg-white">
+                                <option value="default" {% if board_id_1 == 'default' or not board_id_1 %}selected{% endif %}>default (Default Config Board)</option>
+                                {% for b in boards %}
+                                <option value="{{ b.id }}" {% if b.id|string == board_id_1|string %}selected{% endif %}>{{ b.name }} ({{ b.id }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace Columns Header -->
+            <div class="grid grid-cols-12 px-6 py-2.5 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <div class="col-span-5">Target Property (Monday.com Column)</div>
+                <div class="col-span-7">Source Field (Data Stream Path)</div>
+            </div>
+
+            <!-- Mappings Workspace Scrollable List -->
+            <div class="p-6 space-y-3 bg-white border-b border-slate-100" id="target-fields-list">
+                <!-- Will be dynamically populated or rendered via server loops -->
+                {% for m in mapping_rows %}
+                <div class="target-field-row grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer" 
+                     data-target-1="{{ m.board_1_col }}">
+                    
+                    <!-- Left: Monday column identifier and metadata -->
+                    <div class="col-span-5 flex flex-col pr-4">
+                        <span class="text-xs font-bold text-slate-800 property-name">{{ m.board_1_col or 'unnamed_field' }}</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">
+                            {% if m.board_1_col in ['quantity', 'unit_price'] %}Number{% elif m.board_1_col == 'email_address' %}Email{% else %}Text{% endif %} (monday target)
+                        </span>
+                    </div>
+
+                    <!-- Right: Dropzone / Mapping Pill Badge -->
+                    <div class="col-span-7 flex items-center justify-between">
+                        <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                             ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                            
+                            {% if m.target_xero_path %}
+                            <div class="mapping-badge inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-150 text-indigo-700 font-mono text-[11px] font-medium shadow-2xs select-none">
+                                <span class="badge-text">{{ m.target_xero_path }}</span>
+                                <button type="button" onclick="clearMapping(event, this)" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">&times;</button>
+                            </div>
+                            {% else %}
+                            <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Override Inputs / Details Collapsed -->
+                        <div class="ml-3 flex items-center space-x-2">
+                            <input type="text" class="override-input w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="{{ m.custom_override_path if m.custom_override_path else '' }}">
+                            <button type="button" onclick="removeFieldRow(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Add Field Row Button -->
+            <div class="p-6 bg-white border-b border-slate-100 flex items-center justify-between">
+                <button type="button" onclick="addNewFieldRow()" class="px-4 py-2 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer flex items-center space-x-1">
+                    <span>+ Add Custom Target Field</span>
+                </button>
+                <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Drag from Data Stream sidebar to map fields</span>
+            </div>
+
+
+            <!-- ================= PRODUCT MAPPING SECTION ================= -->
+            <!-- Section 3: Product Board Selection & Mapping -->
+            <div class="px-6 py-4 bg-white border-t border-b border-slate-100 flex flex-col space-y-4 mt-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Target monday.com Product Mapping Selection</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- Board ID -->
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Product Board ID</label>
+                        <div class="flex items-center space-x-2">
+                            <select id="board-select-3" onchange="updateBoardField3(3, this.value); loadMondayBoard3Columns(this.value);" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-indigo-600 bg-white">
+                                <option value="5101138235" {% if board_id_3 == '5101138235' or not board_id_3 %}selected{% endif %}>5101138235 (Default Config Product Board)</option>
+                                {% for b in boards %}
+                                <option value="{{ b.id }}" {% if b.id|string == board_id_3|string %}selected{% endif %}>{{ b.name }} ({{ b.id }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace Columns Header for Section 3 -->
+            <div class="grid grid-cols-12 px-6 py-2.5 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <div class="col-span-5">Target Property (Monday.com Column)</div>
+                <div class="col-span-7">Source Field (Data Stream Path)</div>
+            </div>
+
+            <!-- Mappings Workspace List for Section 3 -->
+            <div class="p-6 space-y-3 bg-white border-b border-slate-100" id="target-fields-list-3">
+                {% for m in mapping_rows_b3 %}
+                <div class="target-field-row-3 grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer" 
+                     data-target-3-col="{{ m.board_3_col }}">
+                    
+                    <!-- Left: Monday column identifier and metadata -->
+                    <div class="col-span-5 flex flex-col pr-4">
+                        <span class="text-xs font-bold text-slate-800 property-name-3">{{ m.board_3_col or 'unnamed_field' }}</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">
+                            {% if m.board_3_col in ['cost_price', 'selling_price'] %}Number{% else %}Text{% endif %} (monday target)
+                        </span>
+                    </div>
+
+                    <!-- Right: Dropzone / Mapping Pill Badge -->
+                    <div class="col-span-7 flex items-center justify-between">
+                        <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                             ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                            
+                            {% if m.target_xero_path %}
+                            <div class="mapping-badge inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-150 text-indigo-700 font-mono text-[11px] font-medium shadow-2xs select-none">
+                                <span class="badge-text">{{ m.target_xero_path }}</span>
+                                <button type="button" onclick="clearMapping(event, this)" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">&times;</button>
+                            </div>
+                            {% else %}
+                            <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Override Inputs -->
+                        <div class="ml-3 flex items-center space-x-2">
+                            <input type="text" class="override-input-3 w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="{{ m.custom_override_path if m.custom_override_path else '' }}">
+                            <button type="button" onclick="removeFieldRow3(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Add Field Row Button for Section 3 -->
+            <div class="p-6 bg-white border-b border-slate-100 flex items-center justify-between">
+                <button type="button" onclick="addNewFieldRow3()" class="px-4 py-2 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer flex items-center space-x-1">
+                    <span>+ Add Custom Target Field</span>
+                </button>
+                <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Drag from Data Stream sidebar to map fields</span>
+            </div>
+
+            <!-- ================= INVOICE MAPPING SECTION ================= -->
+            <!-- Section 2: Invoice Board Selection & Mapping -->
+            <div class="px-6 py-4 bg-white border-t border-b border-slate-100 flex flex-col space-y-4 mt-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Target monday.com Invoice Board Selection</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- Board ID -->
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Invoice Board ID</label>
+                        <div class="flex items-center space-x-2">
+                            <select id="board-select-2" onchange="updateBoardField2(2, this.value); loadMondayBoard2Columns(this.value);" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-indigo-600 bg-white">
+                                <option value="default_invoice" {% if board_id_2 == 'default_invoice' or not board_id_2 %}selected{% endif %}>default_invoice (Default Config Invoice Board)</option>
+                                {% for b in boards %}
+                                <option value="{{ b.id }}" {% if b.id|string == board_id_2|string %}selected{% endif %}>{{ b.name }} ({{ b.id }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Header Mapping Subsection -->
+            <div class="px-6 py-3 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                Invoice Header Mappings
+            </div>
+
+            <!-- Workspace Columns Header for Section 2 (Header) -->
+            <div class="grid grid-cols-12 px-6 py-2.5 bg-slate-50/50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <div class="col-span-5">Target Property (Monday.com Column)</div>
+                <div class="col-span-7">Source Field (Data Stream Path)</div>
+            </div>
+
+            <!-- Mappings Workspace List for Invoice Header -->
+            <div class="p-6 space-y-3 bg-white border-b border-slate-100" id="target-fields-list-2-header">
+                {% for m in mapping_rows_b2 %}
+                {% if not m.target_xero_path or 'LineItems' not in m.target_xero_path %}
+                <div class="target-field-row-2 grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer" 
+                     data-target-2-col="{{ m.board_2_col }}">
+                    
+                    <!-- Left: Monday column identifier and metadata -->
+                    <div class="col-span-5 flex flex-col pr-4">
+                        <span class="text-xs font-bold text-slate-800 property-name-2">{{ m.board_2_col or 'unnamed_field' }}</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">
+                            {% if m.board_2_col in ['quantity', 'amount'] %}Number{% else %}Text{% endif %} (monday target)
+                        </span>
+                    </div>
+
+                    <!-- Right: Dropzone / Mapping Pill Badge -->
+                    <div class="col-span-7 flex items-center justify-between">
+                        <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                             ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                            
+                            {% if m.target_xero_path %}
+                            <div class="mapping-badge inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-150 text-indigo-700 font-mono text-[11px] font-medium shadow-2xs select-none">
+                                <span class="badge-text">{{ m.target_xero_path }}</span>
+                                <button type="button" onclick="clearMapping(event, this)" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">&times;</button>
+                            </div>
+                            {% else %}
+                            <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Override Inputs -->
+                        <div class="ml-3 flex items-center space-x-2">
+                            <input type="text" class="override-input-2 w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="{{ m.custom_override_path if m.custom_override_path else '' }}">
+                            <button type="button" onclick="removeFieldRow2(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Add Field Row Button for Section 2 Header -->
+            <div class="p-6 bg-white border-b border-slate-100 flex items-center justify-between">
+                <button type="button" onclick="addNewFieldRow2Header()" class="px-4 py-2 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer flex items-center space-x-1">
+                    <span>+ Add Custom Header Field</span>
+                </button>
+                <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Drag from Data Stream sidebar to map header fields</span>
+            </div>
+
+
+            <!-- Invoice Subitem Mapping Subsection -->
+            <div class="px-6 py-3 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-600 uppercase tracking-wider mt-4">
+                Invoice Subitem Mappings
+            </div>
+
+            <!-- Workspace Columns Header for Section 2 (Subitem) -->
+            <div class="grid grid-cols-12 px-6 py-2.5 bg-slate-50/50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <div class="col-span-5">Target Property (Monday.com Column)</div>
+                <div class="col-span-7">Source Field (Data Stream Path)</div>
+            </div>
+
+            <!-- Mappings Workspace List for Invoice Subitem -->
+            <div class="p-6 space-y-3 bg-white border-b border-slate-100" id="target-fields-list-2-subitem">
+                {% for m in mapping_rows_b2 %}
+                {% if m.target_xero_path and 'LineItems' in m.target_xero_path %}
+                <div class="target-field-row-2 grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer" 
+                     data-target-2-col="{{ m.board_2_col }}">
+                    
+                    <!-- Left: Monday column identifier and metadata -->
+                    <div class="col-span-5 flex flex-col pr-4">
+                        <span class="text-xs font-bold text-slate-800 property-name-2">{{ m.board_2_col or 'unnamed_field' }}</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">
+                            {% if m.board_2_col in ['quantity', 'amount'] %}Number{% else %}Text{% endif %} (monday target)
+                        </span>
+                    </div>
+
+                    <!-- Right: Dropzone / Mapping Pill Badge -->
+                    <div class="col-span-7 flex items-center justify-between">
+                        <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                             ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                            
+                            <div class="mapping-badge inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-150 text-indigo-700 font-mono text-[11px] font-medium shadow-2xs select-none">
+                                <span class="badge-text">{{ m.target_xero_path }}</span>
+                                <button type="button" onclick="clearMapping(event, this)" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">&times;</button>
+                            </div>
+                        </div>
+
+                        <!-- Override Inputs -->
+                        <div class="ml-3 flex items-center space-x-2">
+                            <input type="text" class="override-input-2 w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="{{ m.custom_override_path if m.custom_override_path else '' }}">
+                            <button type="button" onclick="removeFieldRow2(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Add Field Row Button for Section 2 Subitem -->
+            <div class="p-6 bg-white border-t border-slate-100 flex items-center justify-between">
+                <button type="button" onclick="addNewFieldRow2Subitem()" class="px-4 py-2 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer flex items-center space-x-1">
+                    <span>+ Add Custom Subitem Field</span>
+                </button>
+                <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Drag from Data Stream sidebar to map subitem fields</span>
+            </div>
+        </div>
+
+        <!-- Right Panel: Data Stream Sidebar Tree View -->
+        <aside id="datastream-sidebar" class="w-80 border-l border-slate-150 flex flex-col bg-white overflow-hidden transition-all duration-300">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
+                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Data Stream Schema</span>
+                <button type="button" onclick="toggleSidebar()" class="text-slate-400 hover:text-slate-600 focus:outline-none">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Search Schema field -->
+            <div class="p-4 border-b border-slate-100 bg-slate-50/30">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </span>
+                    <input type="text" id="schema-search" oninput="filterSchemaTree()" placeholder="Search source schema..." class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-indigo-600 focus:border-indigo-600 bg-white transition-all">
+                </div>
+            </div>
+
+            <!-- Scrollable Schema Tree -->
+            <div class="flex-grow overflow-y-auto p-6 font-mono text-[11px] text-slate-600" id="schema-tree-container">
+                <ul class="space-y-1.5">
+                    <!-- Schema Root -->
+                    <li class="schema-folder-node">
+                        <div class="flex items-center space-x-1 py-1 rounded hover:bg-slate-50 cursor-pointer" onclick="toggleFolder(this)">
+                            <!-- Arrow icon -->
+                            <svg class="h-3 w-3 transform transition-transform duration-150 rotate-90 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            <span class="font-bold text-slate-800">Schema</span>
+                        </div>
+                        <ul class="pl-4 border-l border-slate-100 ml-1.5 mt-1 space-y-1 folder-content">
+                            <!-- Leaf items from Data Stream root -->
+                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'body_html')" onclick="selectSourceNode(this, 'body_html')">
+                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                    <span class="text-slate-400">&#9634;</span>
+                                    <span>body_html</span>
+                                </div>
+                            </li>
+                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'created_at')" onclick="selectSourceNode(this, 'created_at')">
+                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                    <span class="text-slate-400">&#9634;</span>
+                                    <span>created_at</span>
+                                </div>
+                            </li>
+                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'handle')" onclick="selectSourceNode(this, 'handle')">
+                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                    <span class="text-slate-400">&#9634;</span>
+                                    <span>handle</span>
+                                </div>
+                            </li>
+                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'id')" onclick="selectSourceNode(this, 'id')">
+                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                    <span class="text-slate-400">&#9634;</span>
+                                    <span>id</span>
+                                </div>
+                            </li>
+                            
+                            <!-- Item Subfolder -->
+                            <li class="schema-folder-node">
+                                <div class="flex items-center space-x-1 py-1 rounded hover:bg-slate-50 cursor-pointer" onclick="toggleFolder(this)">
+                                    <svg class="h-3 w-3 transform transition-transform duration-150 rotate-90 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                    <span class="font-bold text-slate-800">Item</span>
+                                </div>
+                                <ul class="pl-4 border-l border-slate-100 ml-1.5 mt-1 space-y-1 folder-content">
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Item.Name')" onclick="selectSourceNode(this, 'Item.Name')">
+                                        <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                            <span class="text-slate-400">&#9634;</span>
+                                            <span>Name</span>
+                                        </div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Item.Code')" onclick="selectSourceNode(this, 'Item.Code')">
+                                        <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                            <span class="text-slate-400">&#9634;</span>
+                                            <span>Code</span>
+                                        </div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Item.Description')" onclick="selectSourceNode(this, 'Item.Description')">
+                                        <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                            <span class="text-slate-400">&#9634;</span>
+                                            <span>Description</span>
+                                        </div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Item.PurchaseDetails.UnitPrice')" onclick="selectSourceNode(this, 'Item.PurchaseDetails.UnitPrice')">
+                                        <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                            <span class="text-slate-400">&#9634;</span>
+                                            <span>PurchaseDetails.UnitPrice (Cost Price)</span>
+                                        </div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Item.SalesDetails.UnitPrice')" onclick="selectSourceNode(this, 'Item.SalesDetails.UnitPrice')">
+                                        <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                            <span class="text-slate-400">&#9634;</span>
+                                            <span>SalesDetails.UnitPrice (Selling Price)</span>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <!-- Invoice Subfolder -->
+                            <li class="schema-folder-node">
+                                <div class="flex items-center space-x-1 py-1 rounded hover:bg-slate-50 cursor-pointer" onclick="toggleFolder(this)">
+                                    <svg class="h-3 w-3 transform transition-transform duration-150 rotate-90 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                    <span class="font-bold text-slate-800">Invoice</span>
+                                </div>
+                                <ul class="pl-4 border-l border-slate-100 ml-1.5 mt-1 space-y-1 folder-content">
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.InvoiceNumber')" onclick="selectSourceNode(this, 'Invoice.InvoiceNumber')">
+                                        <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                            <span class="text-slate-400">&#9634;</span>
+                                            <span>InvoiceNumber</span>
+                                        </div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Status')" onclick="selectSourceNode(this, 'Invoice.Status')">
+                                        <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                            <span class="text-slate-400">&#9634;</span>
+                                            <span>Status</span>
+                                        </div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Total')" onclick="selectSourceNode(this, 'Invoice.Total')">
+                                        <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                            <span class="text-slate-400">&#9634;</span>
+                                            <span>Total</span>
+                                        </div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Reference')" onclick="selectSourceNode(this, 'Invoice.Reference')">
+                                        <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                            <span class="text-slate-400">&#9634;</span>
+                                            <span>Reference</span>
+                                        </div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Date')" onclick="selectSourceNode(this, 'Invoice.Date')">
+                                        <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                            <span class="text-slate-400">&#9634;</span>
+                                            <span>Date</span>
+                                        </div>
+                                    </li>
+                                    
+                                    <!-- Contact Nested Folder -->
+                                    <li class="schema-folder-node">
+                                        <div class="flex items-center space-x-1 py-1 rounded hover:bg-slate-50 cursor-pointer" onclick="toggleFolder(this)">
+                                            <svg class="h-3 w-3 transform transition-transform duration-150 rotate-90 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                            <span class="font-semibold text-slate-700">Contact</span>
+                                        </div>
+                                        <ul class="pl-4 border-l border-slate-100 ml-1.5 mt-1 space-y-1 folder-content">
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.Name')" onclick="selectSourceNode(this, 'Invoice.Contact.Name')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>Name</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.FirstName')" onclick="selectSourceNode(this, 'Invoice.Contact.FirstName')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>FirstName</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.LastName')" onclick="selectSourceNode(this, 'Invoice.Contact.LastName')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>LastName</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.EmailAddress')" onclick="selectSourceNode(this, 'Invoice.Contact.EmailAddress')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>EmailAddress</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.AccountNumber')" onclick="selectSourceNode(this, 'Invoice.Contact.AccountNumber')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>AccountNumber</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.ContactID')" onclick="selectSourceNode(this, 'Invoice.Contact.ContactID')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>ContactID</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.Address')" onclick="selectSourceNode(this, 'Invoice.Contact.Address')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>Address</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.Phone')" onclick="selectSourceNode(this, 'Invoice.Contact.Phone')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>Phone</span>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </li>
+
+                                    <!-- LineItems Nested Folder -->
+                                    <li class="schema-folder-node">
+                                        <div class="flex items-center space-x-1 py-1 rounded hover:bg-slate-50 cursor-pointer" onclick="toggleFolder(this)">
+                                            <svg class="h-3 w-3 transform transition-transform duration-150 rotate-90 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                            <span class="font-semibold text-slate-700">LineItems[0]</span>
+                                        </div>
+                                        <ul class="pl-4 border-l border-slate-100 ml-1.5 mt-1 space-y-1 folder-content">
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.LineItems[0].ItemCode')" onclick="selectSourceNode(this, 'Invoice.LineItems[0].ItemCode')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>ItemCode</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.LineItems[0].Description')" onclick="selectSourceNode(this, 'Invoice.LineItems[0].Description')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>Description</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.LineItems[0].Quantity')" onclick="selectSourceNode(this, 'Invoice.LineItems[0].Quantity')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>Quantity</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.LineItems[0].UnitAmount')" onclick="selectSourceNode(this, 'Invoice.LineItems[0].UnitAmount')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>UnitAmount</span>
+                                                </div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.LineItems[0].TaxType')" onclick="selectSourceNode(this, 'Invoice.LineItems[0].TaxType')">
+                                                <div class="flex items-center space-x-2 py-0.5 px-2 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">
+                                                    <span class="text-slate-400">&#9634;</span>
+                                                    <span>TaxType</span>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Right margin floating toolbar with FX and I/O buttons -->
+        <div class="w-12 border-l border-slate-150 flex flex-col items-center py-4 bg-slate-55/10 space-y-4">
+            <button onclick="toggleSidebar()" class="h-8 w-8 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg flex items-center justify-center font-bold text-xs transition-colors cursor-pointer" title="Data Schema panel">
+                i/o
+            </button>
+            <button type="button" class="h-8 w-8 text-slate-400 hover:text-slate-600 rounded-lg flex items-center justify-center font-bold text-xs transition-colors cursor-pointer" title="Functions editor" onclick="alert('Formula and functions helper editor loaded.')">
+                fx
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden dynamic form to submit data -->
+<form action="/api/mappings/save" method="POST" id="hidden-mappings-form">
+    <input type="hidden" name="board_id_1" id="hidden-board-1" value="{{ board_id_1 }}">
+    <input type="hidden" name="board_id_2" id="hidden-board-2" value="{{ board_id_2 }}">
+    <input type="hidden" name="board_id_3" id="hidden-board-3" value="{{ board_id_3 }}">
+    <div id="hidden-inputs-container"></div>
+</form>
+
+<!-- Reset mapping values helper form -->
+<form action="/api/mappings/reset" method="POST" id="hidden-reset-form">
+    <input type="hidden" name="board_id_1" id="reset-board-1" value="{{ board_id_1 }}">
+    <input type="hidden" name="board_id_2" id="reset-board-2" value="{{ board_id_2 }}">
+    <input type="hidden" name="board_id_3" id="reset-board-3" value="{{ board_id_3 }}">
+    <input type="hidden" name="reset_target" id="reset-target-field" value="both">
+</form>
+
+
+<script>
+    let activeTargetRow = null;
+    let showUnmappedOnly = false;
+    let sidebarOpen = true;
+
+    // Attach row select listeners
+    document.addEventListener("DOMContentLoaded", () => {
+        setupRowSelection();
+        const primaryBoard = document.getElementById("board-select-1");
+        if (primaryBoard && primaryBoard.value) {
+            loadMondayBoardColumns(primaryBoard.value);
+        }
+        const productBoard = document.getElementById("board-select-3");
+        if (productBoard && productBoard.value) {
+            loadMondayBoard3Columns(productBoard.value);
+        }
+    });
+
+    function setupRowSelection() {
+        const rows1 = document.querySelectorAll(".target-field-row");
+        const rows2 = document.querySelectorAll(".target-field-row-2");
+        const rows3 = document.querySelectorAll(".target-field-row-3");
+        const allRows = [...rows1, ...rows2, ...rows3];
+        allRows.forEach(row => {
+            row.addEventListener("click", () => {
+                allRows.forEach(r => r.classList.remove("ring-2", "ring-indigo-600", "bg-indigo-50/10"));
+                row.classList.add("ring-2", "ring-indigo-600", "bg-indigo-55/10");
+                activeTargetRow = row;
+            });
+        });
+    }
+
+
+    // Toggle schema tree folders
+    function toggleFolder(elem) {
+        const arrow = elem.querySelector("svg");
+        const list = elem.nextElementSibling;
+        if (list.classList.contains("hidden")) {
+            list.classList.remove("hidden");
+            arrow.classList.add("rotate-90");
+        } else {
+            list.classList.add("hidden");
+            arrow.classList.remove("rotate-90");
+        }
+    }
+
+    // Toggle sidebar visibility
+    function toggleSidebar() {
+        const sidebar = document.getElementById("datastream-sidebar");
+        sidebarOpen = !sidebarOpen;
+        if (sidebarOpen) {
+            sidebar.classList.remove("w-0");
+            sidebar.classList.add("w-80");
+        } else {
+            sidebar.classList.remove("w-80");
+            sidebar.classList.add("w-0");
+        }
+    }
+
+    // Update hidden fields when select changes
+    function updateBoardField(index, value) {
+        document.getElementById("hidden-board-1").value = value;
+        document.getElementById("reset-board-1").value = value;
+    }
+
+    // Filter target fields
+    function filterTargets() {
+        const query = document.getElementById("target-search").value.toLowerCase();
+        const rows = document.querySelectorAll(".target-field-row");
+        
+        rows.forEach(row => {
+            const name = row.querySelector(".property-name").textContent.toLowerCase();
+            const badge = row.querySelector(".badge-text");
+            const badgeVal = badge ? badge.textContent.toLowerCase() : "";
+            
+            const matchQuery = name.includes(query) || badgeVal.includes(query);
+            const matchUnmapped = !showUnmappedOnly || !badge;
+            
+            if (matchQuery && matchUnmapped) {
+                row.classList.remove("hidden");
+            } else {
+                row.classList.add("hidden");
+            }
+        });
+    }
+
+    // Filter schema tree elements
+    function filterSchemaTree() {
+        const query = document.getElementById("schema-search").value.toLowerCase();
+        const leafNodes = document.querySelectorAll(".schema-leaf-node");
+        
+        leafNodes.forEach(node => {
+            const text = node.textContent.toLowerCase();
+            if (text.includes(query)) {
+                node.classList.remove("hidden");
+                // Open all parent folders
+                let parent = node.closest("ul");
+                while (parent && parent.id !== "schema-tree-container") {
+                    parent.classList.remove("hidden");
+                    const arrow = parent.previousElementSibling ? parent.previousElementSibling.querySelector("svg") : null;
+                    if (arrow) arrow.classList.add("rotate-90");
+                    parent = parent.parentElement.closest("ul");
+                }
+            } else {
+                node.classList.add("hidden");
+            }
+        });
+    }
+
+    // Toggle displaying unmapped targets only
+    function toggleUnmappedOnly() {
+        showUnmappedOnly = !showUnmappedOnly;
+        const btn = document.getElementById("btn-display-toggle");
+        if (showUnmappedOnly) {
+            btn.innerHTML = `
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>
+                </svg>
+                <span>Display: Unmapped</span>
+            `;
+        } else {
+            btn.innerHTML = `
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                <span>Display: All</span>
+            `;
+        }
+        filterTargets();
+    }
+
+    // Drag and Drop implementation
+    function handleDragStart(event, path) {
+        event.dataTransfer.setData("text/plain", path);
+        event.dataTransfer.effectAllowed = "copy";
+    }
+
+    function allowDrop(event) {
+        event.preventDefault();
+    }
+
+    function dragEnter(event) {
+        const dz = event.currentTarget;
+        dz.classList.add("border-indigo-500", "bg-indigo-50/20");
+    }
+
+    function dragLeave(event) {
+        const dz = event.currentTarget;
+        dz.classList.remove("border-indigo-500", "bg-indigo-50/20");
+    }
+
+    function handleDrop(event, element) {
+        event.preventDefault();
+        element.classList.remove("border-indigo-500", "bg-indigo-50/20");
+        const path = event.dataTransfer.getData("text/plain");
+        if (path) {
+            assignMapping(element, path);
+        }
+    }
+
+    // Click-to-map binding
+    function selectSourceNode(nodeElem, path) {
+        if (activeTargetRow) {
+            const dz = activeTargetRow.querySelector(".dropzone");
+            assignMapping(dz, path);
+        }
+    }
+
+    function assignMapping(dropzoneElem, path) {
+        dropzoneElem.innerHTML = `
+            <div class="mapping-badge inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-150 text-indigo-700 font-mono text-[11px] font-medium shadow-2xs select-none">
+                <span class="badge-text">${path}</span>
+                <button type="button" onclick="clearMapping(event, this)" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">&times;</button>
+            </div>
+        `;
+    }
+
+    function clearMapping(event, btn) {
+        event.stopPropagation();
+        const dropzone = btn.closest(".dropzone");
+        dropzone.innerHTML = `<span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>`;
+    }
+
+    // Auto Match Fields Logic
+    function autoMatchFields() {
+        const rows = document.querySelectorAll(".target-field-row");
+        const sources = [
+            "Invoice.Reference",
+            "Invoice.Contact.Name",
+            "Invoice.Contact.FirstName",
+            "Invoice.Contact.LastName",
+            "Invoice.Contact.EmailAddress",
+            "Invoice.Contact.AccountNumber",
+            "Invoice.Contact.ContactID",
+            "Invoice.Contact.Address",
+            "Invoice.Contact.Phone",
+            "Invoice.LineItems[0].ItemCode",
+            "Invoice.LineItems[0].Description",
+            "Invoice.LineItems[0].Quantity",
+            "Invoice.LineItems[0].UnitAmount",
+            "Invoice.LineItems[0].TaxType"
+        ];
+
+        rows.forEach(row => {
+            const targetName = row.querySelector(".property-name").textContent.trim().toLowerCase();
+            const dz = row.querySelector(".dropzone");
+            
+            // Check if already mapped
+            if (dz.querySelector(".mapping-badge")) return;
+
+            // Simple match logic
+            let matchedSource = null;
+            sources.forEach(src => {
+                const parts = src.split(".");
+                const lastPart = parts[parts.length - 1].toLowerCase();
+                
+                // Exact or substring matches
+                if (targetName === lastPart || 
+                    targetName.replace(/_/g, "") === lastPart || 
+                    (targetName === "transaction_id" && lastPart === "reference") ||
+                    (targetName === "company_name" && lastPart === "name") ||
+                    (targetName === "unit_price" && lastPart === "unitamount") ||
+                    (targetName === "item_description" && lastPart === "description") ||
+                    (targetName.includes("first") && lastPart.includes("first")) ||
+                    (targetName.includes("last") && lastPart.includes("last"))
+                ) {
+                    matchedSource = src;
+                }
+            });
+
+            if (matchedSource) {
+                assignMapping(dz, matchedSource);
+            }
+        });
+    }
+
+    // Add field row dynamically
+    function addNewFieldRow() {
+        const fieldName = prompt("Enter target Monday.com column identifier (e.g. account_ref):");
+        if (!fieldName) return;
+        
+        const cleanName = fieldName.trim().replace(/[^a-zA-Z0-9_]/g, "");
+        if (!cleanName) return;
+
+        const list = document.getElementById("target-fields-list");
+        const div = document.createElement("div");
+        div.className = "target-field-row grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
+        div.setAttribute("data-target-1", cleanName);
+        div.setAttribute("data-target-2", "");
+        div.setAttribute("data-target-3", "");
+        
+        div.innerHTML = `
+            <div class="col-span-5 flex flex-col pr-4">
+                <span class="text-xs font-bold text-slate-800 property-name">${cleanName}</span>
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Custom (monday target)</span>
+            </div>
+            <div class="col-span-7 flex items-center justify-between">
+                <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                     ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                    <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>
+                </div>
+                <div class="ml-3 flex items-center space-x-2">
+                    <input type="text" class="override-input w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="">
+                    <button type="button" onclick="removeFieldRow(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+        list.appendChild(div);
+        setupRowSelection();
+    }
+
+    function removeFieldRow(btn) {
+        const row = btn.closest(".target-field-row");
+        if (row) row.remove();
+    }
+
+    // Attach row select listeners
+    document.addEventListener("DOMContentLoaded", () => {
+        setupRowSelection();
+        const primaryBoard = document.getElementById("board-select-1");
+        if (primaryBoard && primaryBoard.value) {
+            loadMondayBoardColumns(primaryBoard.value);
+        }
+        const productBoard = document.getElementById("board-select-3");
+        if (productBoard && productBoard.value) {
+            loadMondayBoard3Columns(productBoard.value);
+        }
+        const invoiceBoard = document.getElementById("board-select-2");
+        if (invoiceBoard && invoiceBoard.value) {
+            loadMondayBoard2Columns(invoiceBoard.value);
+        }
+    });
+
+    function setupRowSelection() {
+        const rows1 = document.querySelectorAll(".target-field-row");
+        const rows2 = document.querySelectorAll(".target-field-row-2");
+        const rows3 = document.querySelectorAll(".target-field-row-3");
+        const allRows = [...rows1, ...rows2, ...rows3];
+        allRows.forEach(row => {
+            row.addEventListener("click", () => {
+                allRows.forEach(r => r.classList.remove("ring-2", "ring-indigo-600", "bg-indigo-50/10"));
+                row.classList.add("ring-2", "ring-indigo-600", "bg-indigo-50/10");
+                activeTargetRow = row;
+            });
+        });
+    }
+
+
+    // Toggle schema tree folders
+    function toggleFolder(elem) {
+        const arrow = elem.querySelector("svg");
+        const list = elem.nextElementSibling;
+        if (list.classList.contains("hidden")) {
+            list.classList.remove("hidden");
+            arrow.classList.add("rotate-90");
+        } else {
+            list.classList.add("hidden");
+            arrow.classList.remove("rotate-90");
+        }
+    }
+
+    // Toggle sidebar visibility
+    function toggleSidebar() {
+        const sidebar = document.getElementById("datastream-sidebar");
+        sidebarOpen = !sidebarOpen;
+        if (sidebarOpen) {
+            sidebar.classList.remove("w-0");
+            sidebar.classList.add("w-80");
+        } else {
+            sidebar.classList.remove("w-80");
+            sidebar.classList.add("w-0");
+        }
+    }
+
+    // Update hidden fields when select changes
+    function updateBoardField(index, value) {
+        document.getElementById("hidden-board-1").value = value;
+        document.getElementById("reset-board-1").value = value;
+    }
+
+    function updateBoardField2(index, value) {
+        document.getElementById("hidden-board-2").value = value;
+        document.getElementById("reset-board-2").value = value;
+    }
+
+    function updateBoardField3(index, value) {
+        document.getElementById("hidden-board-3").value = value;
+        document.getElementById("reset-board-3").value = value;
+    }
+
+
+    // Filter target fields
+    function filterTargets() {
+        const query = document.getElementById("target-search").value.toLowerCase();
+        
+        const rows1 = document.querySelectorAll(".target-field-row");
+        rows1.forEach(row => {
+            const name = row.querySelector(".property-name").textContent.toLowerCase();
+            const badge = row.querySelector(".badge-text");
+            const badgeVal = badge ? badge.textContent.toLowerCase() : "";
+            
+            const matchQuery = name.includes(query) || badgeVal.includes(query);
+            const matchUnmapped = !showUnmappedOnly || !badge;
+            
+            if (matchQuery && matchUnmapped) {
+                row.classList.remove("hidden");
+            } else {
+                row.classList.add("hidden");
+            }
+        });
+
+        const rows2 = document.querySelectorAll(".target-field-row-2");
+        rows2.forEach(row => {
+            const name = row.querySelector(".property-name-2").textContent.toLowerCase();
+            const badge = row.querySelector(".badge-text");
+            const badgeVal = badge ? badge.textContent.toLowerCase() : "";
+            
+            const matchQuery = name.includes(query) || badgeVal.includes(query);
+            const matchUnmapped = !showUnmappedOnly || !badge;
+            
+            if (matchQuery && matchUnmapped) {
+                row.classList.remove("hidden");
+            } else {
+                row.classList.add("hidden");
+            }
+        });
+
+        const rows3 = document.querySelectorAll(".target-field-row-3");
+        rows3.forEach(row => {
+            const name = row.querySelector(".property-name-3").textContent.toLowerCase();
+            const badge = row.querySelector(".badge-text");
+            const badgeVal = badge ? badge.textContent.toLowerCase() : "";
+            
+            const matchQuery = name.includes(query) || badgeVal.includes(query);
+            const matchUnmapped = !showUnmappedOnly || !badge;
+            
+            if (matchQuery && matchUnmapped) {
+                row.classList.remove("hidden");
+            } else {
+                row.classList.add("hidden");
+            }
+        });
+    }
+
+
+    // Filter schema tree elements
+    function filterSchemaTree() {
+        const query = document.getElementById("schema-search").value.toLowerCase();
+        const leafNodes = document.querySelectorAll(".schema-leaf-node");
+        
+        leafNodes.forEach(node => {
+            const text = node.textContent.toLowerCase();
+            if (text.includes(query)) {
+                node.classList.remove("hidden");
+                // Open all parent folders
+                let parent = node.closest("ul");
+                while (parent && parent.id !== "schema-tree-container") {
+                    parent.classList.remove("hidden");
+                    const arrow = parent.previousElementSibling ? parent.previousElementSibling.querySelector("svg") : null;
+                    if (arrow) arrow.classList.add("rotate-90");
+                    parent = parent.parentElement.closest("ul");
+                }
+            } else {
+                node.classList.add("hidden");
+            }
+        });
+    }
+
+    // Toggle displaying unmapped targets only
+    function toggleUnmappedOnly() {
+        showUnmappedOnly = !showUnmappedOnly;
+        const btn = document.getElementById("btn-display-toggle");
+        if (showUnmappedOnly) {
+            btn.innerHTML = `
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>
+                </svg>
+                <span>Display: Unmapped</span>
+            `;
+        } else {
+            btn.innerHTML = `
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                <span>Display: All</span>
+            `;
+        }
+        filterTargets();
+    }
+
+    // Drag and Drop implementation
+    function handleDragStart(event, path) {
+        event.dataTransfer.setData("text/plain", path);
+        event.dataTransfer.effectAllowed = "copy";
+    }
+
+    function allowDrop(event) {
+        event.preventDefault();
+    }
+
+    function dragEnter(event) {
+        const dz = event.currentTarget;
+        dz.classList.add("border-indigo-500", "bg-indigo-50/20");
+    }
+
+    function dragLeave(event) {
+        const dz = event.currentTarget;
+        dz.classList.remove("border-indigo-500", "bg-indigo-50/20");
+    }
+
+    function handleDrop(event, element) {
+        event.preventDefault();
+        element.classList.remove("border-indigo-500", "bg-indigo-50/20");
+        const path = event.dataTransfer.getData("text/plain");
+        if (path) {
+            assignMapping(element, path);
+        }
+    }
+
+    // Click-to-map binding
+    function selectSourceNode(nodeElem, path) {
+        if (activeTargetRow) {
+            const dz = activeTargetRow.querySelector(".dropzone");
+            assignMapping(dz, path);
+        }
+    }
+
+    function assignMapping(dropzoneElem, path) {
+        dropzoneElem.innerHTML = `
+            <div class="mapping-badge inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-150 text-indigo-700 font-mono text-[11px] font-medium shadow-2xs select-none">
+                <span class="badge-text">${path}</span>
+                <button type="button" onclick="clearMapping(event, this)" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">&times;</button>
+            </div>
+        `;
+    }
+
+    function clearMapping(event, btn) {
+        event.stopPropagation();
+        const dropzone = btn.closest(".dropzone");
+        dropzone.innerHTML = `<span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>`;
+    }
+
+    // Auto Match Fields Logic
+    function autoMatchFields() {
+        const rows1 = document.querySelectorAll(".target-field-row");
+        const rows2 = document.querySelectorAll(".target-field-row-2");
+        const rows3 = document.querySelectorAll(".target-field-row-3");
+        const sources = [
+            "Invoice.InvoiceNumber",
+            "Invoice.Status",
+            "Invoice.Total",
+            "Invoice.Reference",
+            "Invoice.Contact.Name",
+            "Invoice.Contact.FirstName",
+            "Invoice.Contact.LastName",
+            "Invoice.Contact.EmailAddress",
+            "Invoice.Contact.AccountNumber",
+            "Invoice.Contact.ContactID",
+            "Invoice.Contact.Address",
+            "Invoice.Contact.Phone",
+            "Invoice.LineItems[0].ItemCode",
+            "Invoice.LineItems[0].Description",
+            "Invoice.LineItems[0].Quantity",
+            "Invoice.LineItems[0].UnitAmount",
+            "Invoice.LineItems[0].TaxType",
+            "Item.Name",
+            "Item.Code",
+            "Item.Description",
+            "Item.PurchaseDetails.UnitPrice",
+            "Item.SalesDetails.UnitPrice"
+        ];
+
+        const matchRow = (row, labelClass, valueAttr) => {
+            const targetName = row.querySelector(labelClass).textContent.trim().toLowerCase();
+            const dz = row.querySelector(".dropzone");
+            if (dz.querySelector(".mapping-badge")) return;
+
+            let matchedSource = null;
+            sources.forEach(src => {
+                const parts = src.split(".");
+                const lastPart = parts[parts.length - 1].toLowerCase();
+                if (targetName === lastPart || 
+                    targetName.replace(/_/g, "") === lastPart || 
+                    (targetName === "transaction_id" && lastPart === "reference") ||
+                    (targetName === "company_name" && lastPart === "name") ||
+                    (targetName === "unit_price" && lastPart === "unitamount") ||
+                    (targetName === "item_description" && lastPart === "description") ||
+                    (targetName === "cost_price" && src === "Item.PurchaseDetails.UnitPrice") ||
+                    (targetName === "selling_price" && src === "Item.SalesDetails.UnitPrice") ||
+                    (targetName.includes("first") && lastPart.includes("first")) ||
+                    (targetName.includes("last") && lastPart.includes("last"))
+                ) {
+                    matchedSource = src;
+                }
+            });
+            if (matchedSource) {
+                assignMapping(dz, matchedSource);
+            }
+        };
+
+        rows1.forEach(row => matchRow(row, ".property-name", "data-target-1"));
+        rows2.forEach(row => matchRow(row, ".property-name-2", "data-target-2-col"));
+        rows3.forEach(row => matchRow(row, ".property-name-3", "data-target-3-col"));
+    }
+
+
+    // Add field row dynamically (Board 1)
+    function addNewFieldRow() {
+        const fieldName = prompt("Enter target Monday.com column identifier (e.g. account_ref):");
+        if (!fieldName) return;
+        
+        const cleanName = fieldName.trim().replace(/[^a-zA-Z0-9_]/g, "");
+        if (!cleanName) return;
+
+        const list = document.getElementById("target-fields-list");
+        const div = document.createElement("div");
+        div.className = "target-field-row grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
+        div.setAttribute("data-target-1", cleanName);
+        
+        div.innerHTML = `
+            <div class="col-span-5 flex flex-col pr-4">
+                <span class="text-xs font-bold text-slate-800 property-name">${cleanName}</span>
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Custom (monday target)</span>
+            </div>
+            <div class="col-span-7 flex items-center justify-between">
+                <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                     ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                    <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>
+                </div>
+                <div class="ml-3 flex items-center space-x-2">
+                    <input type="text" class="override-input w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="">
+                    <button type="button" onclick="removeFieldRow(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+        list.appendChild(div);
+        setupRowSelection();
+    }
+
+    function removeFieldRow(btn) {
+        const row = btn.closest(".target-field-row");
+        if (row) row.remove();
+    }
+
+    // Add header field row dynamically (Board 2)
+    function addNewFieldRow2Header() {
+        const fieldName = prompt("Enter target Monday.com column identifier for Header (e.g. invoice_ref):");
+        if (!fieldName) return;
+        
+        const cleanName = fieldName.trim().replace(/[^a-zA-Z0-9_]/g, "");
+        if (!cleanName) return;
+
+        const list = document.getElementById("target-fields-list-2-header");
+        createFieldRow2(list, cleanName);
+    }
+
+    // Add subitem field row dynamically (Board 2)
+    function addNewFieldRow2Subitem() {
+        const fieldName = prompt("Enter target Monday.com column identifier for Subitem (e.g. subitem_ref):");
+        if (!fieldName) return;
+        
+        const cleanName = fieldName.trim().replace(/[^a-zA-Z0-9_]/g, "");
+        if (!cleanName) return;
+
+        const list = document.getElementById("target-fields-list-2-subitem");
+        createFieldRow2(list, cleanName);
+    }
+
+    function createFieldRow2(list, cleanName) {
+        const div = document.createElement("div");
+        div.className = "target-field-row-2 grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
+        div.setAttribute("data-target-2-col", cleanName);
+        
+        div.innerHTML = `
+            <div class="col-span-5 flex flex-col pr-4">
+                <span class="text-xs font-bold text-slate-800 property-name-2">${cleanName}</span>
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Custom (monday target)</span>
+            </div>
+            <div class="col-span-7 flex items-center justify-between">
+                <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                     ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                    <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>
+                </div>
+                <div class="ml-3 flex items-center space-x-2">
+                    <input type="text" class="override-input-2 w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="">
+                    <button type="button" onclick="removeFieldRow2(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+        list.appendChild(div);
+        setupRowSelection();
+    }
+
+    function removeFieldRow2(btn) {
+        const row = btn.closest(".target-field-row-2");
+        if (row) row.remove();
+    }
+
+    // Add field row dynamically (Board 3)
+    function addNewFieldRow3() {
+        const fieldName = prompt("Enter target Monday.com column identifier (e.g. cost_price):");
+        if (!fieldName) return;
+        
+        const cleanName = fieldName.trim().replace(/[^a-zA-Z0-9_]/g, "");
+        if (!cleanName) return;
+
+        const list = document.getElementById("target-fields-list-3");
+        const div = document.createElement("div");
+        div.className = "target-field-row-3 grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
+        div.setAttribute("data-target-3-col", cleanName);
+        
+        div.innerHTML = `
+            <div class="col-span-5 flex flex-col pr-4">
+                <span class="text-xs font-bold text-slate-800 property-name-3">${cleanName}</span>
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Custom (monday target)</span>
+            </div>
+            <div class="col-span-7 flex items-center justify-between">
+                <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                     ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                    <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>
+                </div>
+                <div class="ml-3 flex items-center space-x-2">
+                    <input type="text" class="override-input-3 w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="">
+                    <button type="button" onclick="removeFieldRow3(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+        list.appendChild(div);
+        setupRowSelection();
+    }
+
+    function removeFieldRow3(btn) {
+        const row = btn.closest(".target-field-row-3");
+        if (row) row.remove();
+    }
+
+
+    // Submit mappings list form
+    function submitMappingsForm() {
+        const form = document.getElementById("hidden-mappings-form");
+        const container = document.getElementById("hidden-inputs-container");
+        container.innerHTML = ""; // Clear old inputs
+        
+        // Serialize Board 1 rows
+        const rows1 = document.querySelectorAll(".target-field-row");
+        rows1.forEach(row => {
+            const b1Col = row.getAttribute("data-target-1");
+            const badge = row.querySelector(".badge-text");
+            const sourcePath = badge ? badge.textContent.trim() : "";
+            const override = row.querySelector(".override-input").value.trim();
+
+            if (sourcePath) {
+                const inputPath = document.createElement("input");
+                inputPath.type = "hidden";
+                inputPath.name = "target_xero_path_1";
+                inputPath.value = sourcePath;
+                container.appendChild(inputPath);
+
+                const inputB1 = document.createElement("input");
+                inputB1.type = "hidden";
+                inputB1.name = "board_1_col_1";
+                inputB1.value = b1Col;
+                container.appendChild(inputB1);
+
+                const inputOverride = document.createElement("input");
+                inputOverride.type = "hidden";
+                inputOverride.name = "custom_override_path_1";
+                inputOverride.value = override;
+                container.appendChild(inputOverride);
+            }
+        });
+
+        // Serialize Board 2 rows
+        const rows2 = document.querySelectorAll(".target-field-row-2");
+        rows2.forEach(row => {
+            const b2Col = row.getAttribute("data-target-2-col");
+            const badge = row.querySelector(".badge-text");
+            const sourcePath = badge ? badge.textContent.trim() : "";
+            const override = row.querySelector(".override-input-2").value.trim();
+
+            if (sourcePath) {
+                const inputPath = document.createElement("input");
+                inputPath.type = "hidden";
+                inputPath.name = "target_xero_path_2";
+                inputPath.value = sourcePath;
+                container.appendChild(inputPath);
+
+                const inputB2 = document.createElement("input");
+                inputB2.type = "hidden";
+                inputB2.name = "board_2_col_2";
+                inputB2.value = b2Col;
+                container.appendChild(inputB2);
+
+                const inputOverride = document.createElement("input");
+                inputOverride.type = "hidden";
+                inputOverride.name = "custom_override_path_2";
+                inputOverride.value = override;
+                container.appendChild(inputOverride);
+            }
+        });
+
+        // Serialize Board 3 rows
+        const rows3 = document.querySelectorAll(".target-field-row-3");
+        rows3.forEach(row => {
+            const b3Col = row.getAttribute("data-target-3-col");
+            const badge = row.querySelector(".badge-text");
+            const sourcePath = badge ? badge.textContent.trim() : "";
+            const override = row.querySelector(".override-input-3").value.trim();
+
+            if (sourcePath) {
+                const inputPath = document.createElement("input");
+                inputPath.type = "hidden";
+                inputPath.name = "target_xero_path_3";
+                inputPath.value = sourcePath;
+                container.appendChild(inputPath);
+
+                const inputB3 = document.createElement("input");
+                inputB3.type = "hidden";
+                inputB3.name = "board_3_col_3";
+                inputB3.value = b3Col;
+                container.appendChild(inputB3);
+
+                const inputOverride = document.createElement("input");
+                inputOverride.type = "hidden";
+                inputOverride.name = "custom_override_path_3";
+                inputOverride.value = override;
+                container.appendChild(inputOverride);
+            }
+        });
+
+        // Submit board IDs as well
+        document.getElementById("hidden-board-1").value = document.getElementById("board-select-1").value;
+        document.getElementById("hidden-board-2").value = document.getElementById("board-select-2").value;
+        document.getElementById("hidden-board-3").value = document.getElementById("board-select-3").value;
+
+        form.submit();
+    }
+
+
+    function loadMondayBoardColumns(boardId) {
+        if (!boardId) return;
+        
+        console.log("Loading columns and details for board ID: " + boardId);
+        
+        fetch(`/api/mappings/board/${encodeURIComponent(boardId)}/details`)
+            .then(res => res.json())
+            .then(data => {
+                const columns = data.columns || [];
+                const currentMappings = data.mappings || [];
+                const list = document.getElementById("target-fields-list");
+                list.innerHTML = ""; // Clear existing rows
+                
+                columns.forEach(col => {
+                    // Match column ID with saved source_column
+                    const existing = currentMappings.find(m => m.source_column === col.id);
+                    const mappedPath = existing ? existing.target_xero_path : "";
+                    const overrideVal = existing ? (existing.custom_override_path || "") : "";
+                    
+                    const div = document.createElement("div");
+                    div.className = "target-field-row grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
+                    div.setAttribute("data-target-1", col.id);
+                    
+                    div.innerHTML = `
+                        <div class="col-span-5 flex flex-col pr-4">
+                            <span class="text-xs font-bold text-slate-800 property-name">${col.id}</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${col.type} (monday target)</span>
+                        </div>
+                        <div class="col-span-7 flex items-center justify-between">
+                            <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                                 ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                                ${mappedPath ? `
+                                <div class="mapping-badge inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-150 text-indigo-700 font-mono text-[11px] font-medium shadow-2xs select-none">
+                                    <span class="badge-text">${mappedPath}</span>
+                                    <button type="button" onclick="clearMapping(event, this)" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">&times;</button>
+                                </div>` : `
+                                <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>`}
+                            </div>
+                            <div class="ml-3 flex items-center space-x-2">
+                                <input type="text" class="override-input w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="${overrideVal}">
+                                <button type="button" onclick="removeFieldRow(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+                
+                setupRowSelection();
+            })
+            .catch(err => {
+                console.error("Error loading board columns:", err);
+            });
+    }
+
+    function loadMondayBoard2Columns(boardId) {
+        if (!boardId) return;
+        
+        console.log("Loading columns and details for Board 2 ID: " + boardId);
+        
+        fetch(`/api/mappings/board/${encodeURIComponent(boardId)}/details`)
+            .then(res => res.json())
+            .then(data => {
+                const columns = data.columns || [];
+                const currentMappings = data.mappings || [];
+                const listHeader = document.getElementById("target-fields-list-2-header");
+                const listSubitem = document.getElementById("target-fields-list-2-subitem");
+                listHeader.innerHTML = ""; // Clear existing rows
+                listSubitem.innerHTML = ""; // Clear existing rows
+                
+                columns.forEach(col => {
+                    const existing = currentMappings.find(m => m.source_column === col.id);
+                    const mappedPath = existing ? existing.target_xero_path : "";
+                    const overrideVal = existing ? (existing.custom_override_path || "") : "";
+                    
+                    const isSubitem = (col.title && col.title.includes("(Subitem)")) || (mappedPath && mappedPath.includes("LineItems"));
+                    const targetList = isSubitem ? listSubitem : listHeader;
+                    
+                    const div = document.createElement("div");
+                    div.className = "target-field-row-2 grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
+                    div.setAttribute("data-target-2-col", col.id);
+                    
+                    div.innerHTML = `
+                        <div class="col-span-5 flex flex-col pr-4">
+                            <span class="text-xs font-bold text-slate-800 property-name-2">${col.id}</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${col.type} (monday target)</span>
+                        </div>
+                        <div class="col-span-7 flex items-center justify-between">
+                            <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                                 ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                                ${mappedPath ? `
+                                <div class="mapping-badge inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-150 text-indigo-700 font-mono text-[11px] font-medium shadow-2xs select-none">
+                                    <span class="badge-text">${mappedPath}</span>
+                                    <button type="button" onclick="clearMapping(event, this)" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">&times;</button>
+                                </div>` : `
+                                <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>`}
+                            </div>
+                            <div class="ml-3 flex items-center space-x-2">
+                                <input type="text" class="override-input-2 w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="${overrideVal}">
+                                <button type="button" onclick="removeFieldRow2(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    targetList.appendChild(div);
+                });
+                
+                setupRowSelection();
+            })
+            .catch(err => {
+                console.error("Error loading board 2 columns:", err);
+            });
+    }
+
+    function loadMondayBoard3Columns(boardId) {
+        if (!boardId) return;
+        
+        console.log("Loading columns and details for Board 3 ID: " + boardId);
+        
+        fetch(`/api/mappings/board/${encodeURIComponent(boardId)}/details`)
+            .then(res => res.json())
+            .then(data => {
+                const columns = data.columns || [];
+                const currentMappings = data.mappings || [];
+                const list = document.getElementById("target-fields-list-3");
+                list.innerHTML = ""; // Clear existing rows
+                
+                columns.forEach(col => {
+                    const existing = currentMappings.find(m => m.source_column === col.id);
+                    const mappedPath = existing ? existing.target_xero_path : "";
+                    const overrideVal = existing ? (existing.custom_override_path || "") : "";
+                    
+                    const div = document.createElement("div");
+                    div.className = "target-field-row-3 grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
+                    div.setAttribute("data-target-3-col", col.id);
+                    
+                    div.innerHTML = `
+                        <div class="col-span-5 flex flex-col pr-4">
+                            <span class="text-xs font-bold text-slate-800 property-name-3">${col.id}</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${col.type} (monday target)</span>
+                        </div>
+                        <div class="col-span-7 flex items-center justify-between">
+                            <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
+                                 ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
+                                ${mappedPath ? `
+                                <div class="mapping-badge inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-150 text-indigo-700 font-mono text-[11px] font-medium shadow-2xs select-none">
+                                    <span class="badge-text">${mappedPath}</span>
+                                    <button type="button" onclick="clearMapping(event, this)" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">&times;</button>
+                                </div>` : `
+                                <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>`}
+                            </div>
+                            <div class="ml-3 flex items-center space-x-2">
+                                <input type="text" class="override-input-3 w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="${overrideVal}">
+                                <button type="button" onclick="removeFieldRow3(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+                
+                setupRowSelection();
+            })
+            .catch(err => {
+                console.error("Error loading board 3 columns:", err);
+            });
+    }
+
+    function resetToDefaults() {
+        if (confirm("Reset mapping rules to defaults for ALL boards?")) {
+            document.getElementById("reset-board-1").value = document.getElementById("board-select-1").value;
+            document.getElementById("reset-board-2").value = document.getElementById("board-select-2").value;
+            document.getElementById("reset-board-3").value = document.getElementById("board-select-3").value;
+            document.getElementById("reset-target-field").value = "all";
+            document.getElementById("hidden-reset-form").submit();
+        }
+    }
+
+</script>
+{% endblock %}

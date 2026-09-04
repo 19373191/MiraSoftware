@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Platform Connectors - Project M.I.R.A.{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-6xl mx-auto">
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Platform Integration Connectors</h1>
+        <p class="text-xs text-slate-500">Configure credentials, OAuth authorization tokens, and API endpoints for monday.com and Xero.</p>
+    </div>
+
+    <!-- Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- monday.com Integration Card -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-6">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-lg font-extrabold shadow-md shadow-indigo-600/30">
+                            M
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">monday.com Integration</h3>
+                            <p class="text-xs text-slate-500">GraphQL API Workspace</p>
+                        </div>
+                    </div>
+
+                    <!-- Connection Status Badge -->
+                    {% if monday_status == 'Connected' %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                        Connected
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                        Disconnected
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Form Inputs for MONDAY_API_KEY -->
+                <form action="/api/connectors/monday/save" method="POST" class="space-y-4">
+                    <div>
+                        <label for="api_key" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">MONDAY_API_KEY</label>
+                        <input type="password" id="api_key" name="api_key" required value="{{ monday_cred.api_key if monday_cred and monday_cred.api_key else '' }}"
+                            placeholder="eyJhbGciOiJIUzI1NiIsIn..."
+                            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer">
+                        Save Monday Credentials
+                    </button>
+                </form>
+            </div>
+
+            <!-- Test Connection Button -->
+            <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-[11px] text-slate-400">Endpoint: https://api.monday.com/v2</span>
+                <button onclick="testMondayConnection()" id="btn-test-monday" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors cursor-pointer">
+                    Test Connection
+                </button>
+            </div>
+            <div id="test-monday-result" class="hidden text-xs p-3 rounded-xl"></div>
+        </div>
+
+        <!-- Xero Developer Integration Card -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-6">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="h-10 w-10 bg-sky-500 rounded-xl flex items-center justify-center text-white text-lg font-extrabold shadow-md shadow-sky-500/30">
+                            X
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">Xero Developer Integration</h3>
+                            <p class="text-xs text-slate-500">OAuth 2.0 REST API Gateway</p>
+                        </div>
+                    </div>
+
+                    <!-- Connection Status Badge -->
+                    {% if xero_status == 'Connected' %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                        Connected
+                    </span>
+                    {% elif xero_status == 'Token Expired' or xero_status == 'Expired' %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                        Expired
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                        Disconnected
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Form Inputs for XERO_CLIENT_ID & XERO_CLIENT_SECRET -->
+                <form action="/api/connectors/xero/save" method="POST" class="space-y-4">
+                    <div>
+                        <label for="client_id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">XERO_CLIENT_ID</label>
+                        <input type="text" id="client_id" name="client_id" required value="{{ xero_client_id if xero_client_id else '' }}"
+                            placeholder="Enter Xero Client ID"
+                            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
+                    </div>
+
+                    <div>
+                        <label for="client_secret" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">XERO_CLIENT_SECRET</label>
+                        <input type="password" id="client_secret" name="client_secret" required value="{{ xero_client_secret if xero_client_secret else '' }}"
+                            placeholder="Enter Xero Client Secret"
+                            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 bg-sky-50/20 text-xs space-y-1">
+                        <div class="flex justify-between items-center text-slate-500">
+                            <span>Redirect URI:</span>
+                            <span id="xero-redirect-uri" class="font-mono font-bold text-slate-800 text-[11px]">Loading...</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer">
+                        Save Xero Credentials
+                    </button>
+                </form>
+
+                {% if xero_status == 'Connected' %}
+                <div class="space-y-2">
+                    <a href="/oauth/xero/connect" class="w-full py-3.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-sky-500/20 flex items-center justify-center space-x-2 cursor-pointer">
+                        <span> Reconnect / Re-authorize OAuth 2.0</span>
+                    </a>
+                    <form action="/api/connectors/xero/disconnect" method="POST">
+                        <button type="submit" class="w-full py-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer">
+                            Disconnect Xero Account
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <a href="/oauth/xero/connect" class="w-full py-3.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-sky-500/20 flex items-center justify-center space-x-2 cursor-pointer">
+                    <span> Authenticate OAuth 2.0</span>
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 text-xs text-slate-400 flex justify-between">
+                <span>Scopes: accounting.invoices, accounting.contacts, accounting.settings</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function testMondayConnection() {
+    const resDiv = document.getElementById("test-monday-result");
+    const btn = document.getElementById("btn-test-monday");
+    resDiv.classList.remove("hidden");
+    resDiv.className = "text-xs p-3 rounded-xl bg-slate-100 text-slate-700 animate-pulse";
+    resDiv.textContent = "Testing monday.com GraphQL API connection...";
+    btn.disabled = true;
+
+    fetch("/api/connectors/monday/test", { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            if (data.status === "success") {
+                resDiv.className = "text-xs p-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200";
+                resDiv.textContent = " " + data.message;
+            } else {
+                resDiv.className = "text-xs p-3 rounded-xl bg-red-50 text-red-800 border border-red-200";
+                resDiv.textContent = " " + data.message;
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            resDiv.className = "text-xs p-3 rounded-xl bg-red-50 text-red-800 border border-red-200";
+            resDiv.textContent = " Network Error: " + err;
+        });
+}
+
+// Dynamically display the absolute Redirect URI matching the current domain/IP
+document.addEventListener("DOMContentLoaded", () => {
+    const redirectEl = document.getElementById("xero-redirect-uri");
+    if (redirectEl) {
+        redirectEl.textContent = window.location.origin + "/oauth/xero/callback";
+    }
+});
+</script>
+{% endblock %}

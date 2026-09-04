@@ -1,0 +1,26 @@
+# Virtual environment
+.venv/
+env/
+venv/
+ENV/
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local configuration & credentials
+.env
+*.local
+
+# Local SQLite databases & test databases
+mira.db
+mock_db.json
+mock_db_test.json
+*.db
+*.sqlite3
+
+# OS generated files
+Thumbs.db
+.DS_Store

@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Synchronization Control Panel - Project M.I.R.A.{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Synchronization Control Panel</h1>
+            <p class="text-xs text-slate-500">Trigger high-throughput batch synchronization, stream live execution telemetry, and audit sync logs.</p>
+        </div>
+    </div>
+
+    <!-- Grid Layout: Settings + Live Terminal -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Operational Settings Card -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between space-y-6">
+            <div class="space-y-4">
+                <div class="border-b border-slate-100 pb-3">
+                    <h3 class="text-sm font-bold text-slate-900">Operational Settings</h3>
+                    <p class="text-xs text-slate-500">Configure parameters for sync execution.</p>
+                </div>
+
+                <div>
+                    <label for="select-direction" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Synchronization Direction</label>
+                    <select id="select-direction" onchange="toggleSyncFields()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-indigo-600 bg-white">
+                        <option value="xero_to_monday" selected>Xero to Monday.com (Default)</option>
+                        <option value="monday_to_xero">Monday.com to Xero</option>
+                    </select>
+                </div>
+
+                <!-- Fields for Xero to Monday -->
+                <div id="fields-xero-to-monday" class="space-y-3">
+                    <div>
+                        <label for="board_id_1" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Target Monday Board ID (Customers)</label>
+                        <input type="text" id="board_id_1" placeholder="Enter Board ID" value="5101138223"
+                            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-indigo-600">
+                    </div>
+                    <div>
+                        <label for="board_id_3" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Target Monday Board ID (Products)</label>
+                        <input type="text" id="board_id_3" placeholder="Enter Product Board ID" value="5101138235"
+                            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-indigo-600">
+                    </div>
+                </div>
+
+                <!-- Fields for Monday to Xero -->
+                <div id="fields-monday-to-xero" class="space-y-3 hidden">
+                    <div>
+                        <label for="select-mode" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Synchronization Mode</label>
+                        <select id="select-mode" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-indigo-600 bg-white">
+                            <option value="true" selected>B2B Batch Grouping (Group by Company)</option>
+                            <option value="false">Individual Item Synchronization</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="select-account" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Target Xero Sales Account</label>
+                        <select id="select-account" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-indigo-600 bg-white">
+                            <option value="200" selected>200 - Sales Revenue (Default)</option>
+                            <option value="260">260 - Other Revenue</option>
+                            <option value="400">400 - Direct Costs</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="input-batch-count" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Batch Limit</label>
+                    <input type="number" id="input-batch-count" value="100" min="1" max="5000"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-indigo-600">
+                    <span class="text-[10px] text-slate-400">Max records to process</span>
+                </div>
+            </div>
+
+            <button onclick="startLiveSync()" id="btn-run-sync"
+                class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2 cursor-pointer">
+                <span>Run Sync Engine</span>
+            </button>
+            <button onclick="resetSyncHistory()" id="btn-reset-history"
+                class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer mt-2">
+                <span>Reset Sync History (Clear Cutoff)</span>
+            </button>
+        </div>
+
+        <!-- Live Terminal Panel -->
+        <div class="lg:col-span-2 bg-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800 text-white flex flex-col justify-between space-y-4 font-mono text-xs">
+            
+            <!-- Terminal Header -->
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="h-3 w-3 rounded-full bg-red-500 inline-block"></span>
+                    <span class="h-3 w-3 rounded-full bg-yellow-500 inline-block"></span>
+                    <span class="h-3 w-3 rounded-full bg-green-500 inline-block"></span>
+                    <span class="text-xs text-slate-400 font-semibold pl-2">M.I.R.A. Live Processing Engine</span>
+                </div>
+                <span id="sync-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 uppercase tracking-wider">
+                    IDLE
+                </span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="space-y-1">
+                <div class="flex justify-between text-[11px] text-slate-400 font-sans">
+                    <span>Engine Progress</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-300 w-0"></div>
+                </div>
+            </div>
+
+            <!-- Live Console Logs Window -->
+            <div id="console-logs" class="bg-slate-950/80 rounded-xl p-4 h-48 overflow-y-auto space-y-1 text-[11px] text-emerald-400 border border-slate-800 font-mono">
+                <div class="text-slate-500">&gt; System ready. Click 'Run Sync Engine' to initiate live stream.</div>
+            </div>
+
+            <!-- Live Metrics Grid -->
+            <div class="grid grid-cols-4 gap-3 pt-2 border-t border-slate-800 text-center font-sans">
+                <div class="bg-slate-800/50 p-2.5 rounded-xl border border-slate-800">
+                    <span class="text-[10px] text-slate-400 block uppercase">Execution Time</span>
+                    <span id="metric-time" class="text-sm font-bold text-white font-mono">0.00s</span>
+                </div>
+                <div class="bg-slate-800/50 p-2.5 rounded-xl border border-slate-800">
+                    <span class="text-[10px] text-slate-400 block uppercase">Median Latency</span>
+                    <span id="metric-latency" class="text-sm font-bold text-indigo-400 font-mono">0.00 ms</span>
+                </div>
+                <div class="bg-slate-800/50 p-2.5 rounded-xl border border-slate-800">
+                    <span class="text-[10px] text-slate-400 block uppercase">Accuracy Rate</span>
+                    <span id="metric-accuracy" class="text-sm font-bold text-emerald-400 font-mono">100%</span>
+                </div>
+                <div class="bg-slate-800/50 p-2.5 rounded-xl border border-slate-800">
+                    <span class="text-[10px] text-slate-400 block uppercase">Processed Payloads</span>
+                    <span id="metric-total" class="text-sm font-bold text-white font-mono">0</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Recent Sync Audits Table -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
+        <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-900">Recent Sync Log Audits</h3>
+            <span class="text-xs text-slate-500">Database Audit Trail (`SyncLog`)</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Log ID</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Timestamp</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Status</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Payload Count</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Execution Details</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs">
+                    {% for log in recent_logs %}
+                    <tr class="hover:bg-slate-50/50">
+                        <td class="px-4 py-3 font-mono font-semibold text-slate-700">#{{ log.id }}</td>
+                        <td class="px-4 py-3 text-slate-500">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else 'N/A' }}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {% if log.status == 'SUCCESS' %}bg-emerald-100 text-emerald-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ log.status }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 font-mono font-bold text-slate-800">{{ log.payload_count }}</td>
+                        <td class="px-4 py-3 text-slate-600 font-mono text-[11px]">{{ log.error_details if log.error_details else 'Execution completed cleanly.' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="px-4 py-4 text-center text-slate-400 italic">No sync execution logs recorded yet. Run a sync above to generate audit logs.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSyncFields() {
+    const dir = document.getElementById("select-direction").value;
+    const xeroToMondayDiv = document.getElementById("fields-xero-to-monday");
+    const mondayToXeroDiv = document.getElementById("fields-monday-to-xero");
+    
+    if (dir === "xero_to_monday") {
+        xeroToMondayDiv.classList.remove("hidden");
+        mondayToXeroDiv.classList.add("hidden");
+    } else {
+        xeroToMondayDiv.classList.add("hidden");
+        mondayToXeroDiv.classList.remove("hidden");
+    }
+}
+
+// Run initially to ensure correct fields display
+document.addEventListener("DOMContentLoaded", toggleSyncFields);
+
+function startLiveSync() {
+    const btn = document.getElementById("btn-run-sync");
+    const logsDiv = document.getElementById("console-logs");
+    const progressBar = document.getElementById("progress-bar");
+    const progressPercent = document.getElementById("progress-percent");
+    const statusBadge = document.getElementById("sync-status-badge");
+
+    const direction = document.getElementById("select-direction").value;
+    const count = document.getElementById("input-batch-count").value || 100;
+    const board1 = document.getElementById("board_id_1").value;
+    const board3 = document.getElementById("board_id_3").value;
+    const mode = document.getElementById("select-mode").value;
+    const account = document.getElementById("select-account").value;
+
+    btn.disabled = true;
+    btn.classList.add("opacity-50", "cursor-not-allowed");
+    statusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase tracking-wider";
+    statusBadge.textContent = "PROCESSING";
+
+    logsDiv.innerHTML = "<div class='text-slate-400'>&gt; Connecting to SSE stream endpoint...</div>";
+    progressBar.style.width = "5%";
+    progressPercent.textContent = "5%";
+
+    let url = `/api/sync/stream?direction=${direction}&batch_count=${count}`;
+    if (direction === "xero_to_monday") {
+        url += `&board_id_1=${encodeURIComponent(board1)}&board_id_3=${encodeURIComponent(board3)}`;
+    } else {
+        url += `&group_by_company=${mode}&target_account=${account}`;
+    }
+
+    const eventSource = new EventSource(url);
+
+    eventSource.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            
+            if (data.percent !== undefined) {
+                progressBar.style.width = data.percent + "%";
+                progressPercent.textContent = data.percent + "%";
+            }
+
+            if (data.log) {
+                const logLine = document.createElement("div");
+                logLine.textContent = "> " + data.log;
+                logsDiv.appendChild(logLine);
+                logsDiv.scrollTop = logsDiv.scrollHeight;
+            }
+
+            if (data.summary) {
+                document.getElementById("metric-time").textContent = data.summary.exec_time + "s";
+                document.getElementById("metric-latency").textContent = data.summary.latency_ms + " ms";
+                document.getElementById("metric-accuracy").textContent = data.summary.accuracy + "%";
+                document.getElementById("metric-total").textContent = data.summary.total;
+            }
+
+            if (data.status === "COMPLETED") {
+                eventSource.close();
+                btn.disabled = false;
+                btn.classList.remove("opacity-50", "cursor-not-allowed");
+                statusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase tracking-wider";
+                statusBadge.textContent = "COMPLETED";
+            }
+        } catch (e) {
+            console.error("Error parsing SSE message:", e);
+        }
+    };
+
+    eventSource.onerror = function(err) {
+        console.error("SSE Connection Error:", err);
+        eventSource.close();
+        btn.disabled = false;
+        btn.classList.remove("opacity-50", "cursor-not-allowed");
+        statusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-400 uppercase tracking-wider";
+        statusBadge.textContent = "ERROR";
+    };
+}
+
+function resetSyncHistory() {
+    if (!confirm("Are you sure you want to reset your sync history? This will clear the runtime cutoff filter, and the next sync will process all records from the beginning.")) {
+        return;
+    }
+    const btn = document.getElementById("btn-reset-history");
+    btn.disabled = true;
+    const oldText = btn.innerHTML;
+    btn.innerHTML = "<span>Resetting...</span>";
+    fetch("/api/sync-history/reset", { method: "POST" })
+        .then(response => response.json())
+        .then(data => {
+            alert("Sync history reset successfully! The next sync run will process all records.");
+            btn.disabled = false;
+            btn.innerHTML = oldText;
+        })
+        .catch(err => {
+            alert("Error resetting history: " + err);
+            btn.disabled = false;
+            btn.innerHTML = oldText;
+        });
+}
+</script>
+{% endblock %}

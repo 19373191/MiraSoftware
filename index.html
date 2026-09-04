@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project M.I.R.A. - Integration Dashboard</title>
+    <!-- Tailwind CSS v3 via Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-100 min-h-screen text-slate-800 font-sans flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <nav class="glass-panel sticky top-0 z-50 px-6 py-4 shadow-sm flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-md shadow-indigo-600/30">
+                M
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-slate-900">Project M.I.R.A.</h1>
+                <p class="text-xs text-indigo-600 font-medium">iPaaS Sync Pipeline v1.2</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 animate-pulse">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                Engine Ready
+            </span>
+            <a href="/health" target="_blank" class="text-xs font-medium text-slate-500 hover:text-indigo-600 transition-colors">
+                API Health Check
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl w-full mx-auto p-6 md:p-8 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Side: Connections & Operations -->
+        <section class="lg:col-span-5 flex flex-col space-y-8">
+            
+            <!-- Connections Block -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col">
+                <div class="mb-4">
+                    <h2 class="text-base font-bold text-slate-900">Platform Connections</h2>
+                    <p class="text-xs text-slate-500">Authorise your workspace environments to enable webhook relays.</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- Monday.com connection card -->
+                    <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-slate-300">
+                        <div class="flex items-center space-x-3">
+                            <div class="h-10 w-10 bg-indigo-500 rounded-lg flex items-center justify-center text-white text-base font-bold">
+                                M
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-slate-800">Monday.com Workspace</h3>
+                                <p class="text-xs text-slate-500">Board items extraction feed</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 self-end md:self-auto">
+                            <!-- Visual Connection Badge -->
+                            <span id="monday-status" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Disconnected
+                            </span>
+                            <button id="btn-auth-monday" onclick="toggleConnection('monday')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors shadow-sm">
+                                Authorise
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Xero connection card -->
+                    <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-slate-300">
+                        <div class="flex items-center space-x-3">
+                            <div class="h-10 w-10 bg-sky-500 rounded-lg flex items-center justify-center text-white text-base font-bold">
+                                X
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-slate-800">Xero Developer Sandbox</h3>
+                                <p class="text-xs text-slate-500">Invoice creation loader</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 self-end md:self-auto">
+                            <!-- Visual Connection Badge -->
+                            <span id="xero-status" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Disconnected
+                            </span>
+                            <button id="btn-auth-xero" onclick="toggleConnection('xero')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors shadow-sm">
+                                Authorise
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operational Control Block -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col flex-grow justify-between space-y-4">
+                <div class="space-y-4">
+                    <h2 class="text-base font-bold text-slate-900">Synchronisation Controls</h2>
+                    <p class="text-xs text-slate-500">Configure parameters and run the integration engine pipeline.</p>
+                    
+                    <div>
+                        <label for="select-direction" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Sync Direction</label>
+                        <select id="select-direction" onchange="toggleSyncFields()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-indigo-600 bg-white">
+                            <option value="xero_to_monday" selected>Xero to Monday.com (Default)</option>
+                            <option value="monday_to_xero">Monday.com to Xero</option>
+                        </select>
+                    </div>
+
+                    <!-- Fields for Monday to Xero -->
+                    <div id="fields-monday-to-xero" class="space-y-3 hidden">
+                        <div>
+                            <label for="select-mode" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Sync Mode</label>
+                            <select id="select-mode" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-indigo-600 bg-white">
+                                <option value="true" selected>Group by Company</option>
+                                <option value="false">Individual Item Sync</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="select-account" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Target Account</label>
+                            <select id="select-account" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-indigo-600 bg-white">
+                                <option value="200" selected>200 - Sales Revenue</option>
+                                <option value="260">260 - Other Revenue</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="input-batch-count" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Batch Limit</label>
+                        <input type="number" id="input-batch-count" value="100" min="1" max="5000" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-indigo-600 bg-white">
+                    </div>
+                </div>
+
+                <button id="btn-sync" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center space-x-2 glow-hover duration-200 cursor-pointer">
+                    <!-- Loading Spinner (hidden by default) -->
+                    <svg id="sync-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <!-- Sync icon (hidden when spinning) -->
+                    <svg id="sync-icon" class="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M19 12a7 7 0 0 1-7 7c-3.86 0-7-3.14-7-7s3.14-7 7-7a6.96 6.96 0 0 1 4.56 1.7L15 9h6V3l-2.05 2.05A8.93 8.93 0 0 0 12 3a9 9 0 0 0-9 9 9 9 0 0 0 9 9 9 9 0 0 0 7.72-4.57l-1.72-1.43z"/>
+                    </svg>
+                    <span id="sync-text">Run Sync Engine</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Right Side: Integration Mapping Configuration -->
+        <section class="lg:col-span-7 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col overflow-hidden h-[600px] font-sans">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Integration Settings & Schema Mapping</h2>
+                    <p class="text-[10px] text-slate-400 font-semibold mt-0.5">Configure Xero Source paths mapping to target monday.com columns.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="autoMatchFields()" class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold border border-emerald-250 bg-emerald-50/20 text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer">
+                         Auto Match
+                    </button>
+                    <button type="button" onclick="toggleUnmappedOnly()" id="btn-display-toggle" class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
+                        Display: All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Target Board Selection -->
+            <div class="px-6 py-3 bg-slate-50/30 border-b border-slate-100 space-y-3">
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Board ID</label>
+                    <input type="text" id="board-id-1" placeholder="Board ID" value="default" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-mono focus:outline-indigo-600 bg-white">
+                </div>
+            </div>
+
+            <!-- Search and Column headers -->
+            <div class="px-6 py-2 border-b border-slate-100 flex items-center justify-between gap-4">
+                <input type="text" id="target-search" oninput="filterTargets()" placeholder="Search target fields..." class="w-48 px-2 py-1 rounded border border-slate-200 text-[10px] focus:outline-indigo-600 bg-white">
+                <div class="grid grid-cols-12 flex-grow text-[9px] font-bold text-slate-400 uppercase tracking-wider text-right pl-4">
+                    <div class="col-span-5 text-left">Target Column</div>
+                    <div class="col-span-7">Source path mapping</div>
+                </div>
+            </div>
+
+            <!-- Workspace columns + Sidebar wrapper -->
+            <div class="flex-grow flex overflow-hidden relative">
+                <!-- Left: Workspace fields list -->
+                <div class="flex-grow overflow-y-auto p-4 space-y-2 bg-slate-50/10" id="tbody-mappings">
+                    <!-- Loaded dynamically from app.js -->
+                </div>
+
+                <!-- Right: Collapsible Data Stream Tree view -->
+                <aside id="datastream-sidebar" class="w-64 border-l border-slate-150 flex flex-col bg-white overflow-hidden transition-all duration-300">
+                    <div class="px-4 py-2 border-b border-slate-100 bg-slate-50 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        <span>Schema Tree</span>
+                        <input type="text" id="schema-search" oninput="filterSchemaTree()" placeholder="Filter tree..." class="w-24 px-1.5 py-0.5 rounded border border-slate-200 text-[9px] font-normal bg-white">
+                    </div>
+                    
+                    <!-- Schema Tree Content -->
+                    <div class="flex-grow overflow-y-auto p-4 font-mono text-[10px] text-slate-600" id="schema-tree-container">
+                        <ul class="space-y-1">
+                            <li class="schema-folder-node">
+                                <div class="flex items-center space-x-1 py-0.5 rounded hover:bg-slate-50 cursor-pointer" onclick="toggleFolder(this)">
+                                    <svg class="h-2.5 w-2.5 transform transition-transform duration-150 rotate-90 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                    <span class="font-bold text-slate-800">Schema</span>
+                                </div>
+                                <ul class="pl-3 border-l border-slate-100 ml-1 mt-0.5 space-y-0.5 folder-content">
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'body_html')" onclick="selectSourceNode(this, 'body_html')">
+                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">body_html</div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'created_at')" onclick="selectSourceNode(this, 'created_at')">
+                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">created_at</div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'handle')" onclick="selectSourceNode(this, 'handle')">
+                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">handle</div>
+                                    </li>
+                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'id')" onclick="selectSourceNode(this, 'id')">
+                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">id</div>
+                                    </li>
+                                    
+                                    <!-- Item Subfolder -->
+                                    <li class="schema-folder-node">
+                                        <div class="flex items-center space-x-1 py-0.5 rounded hover:bg-slate-50 cursor-pointer" onclick="toggleFolder(this)">
+                                            <svg class="h-2.5 w-2.5 transform transition-transform duration-150 rotate-90 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                            <span class="font-bold text-slate-800">Item</span>
+                                        </div>
+                                        <ul class="pl-3 border-l border-slate-100 ml-1 mt-0.5 space-y-0.5 folder-content">
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Item.Name')" onclick="selectSourceNode(this, 'Item.Name')">
+                                                <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">Name</div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Item.Code')" onclick="selectSourceNode(this, 'Item.Code')">
+                                                <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">Code</div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Item.Description')" onclick="selectSourceNode(this, 'Item.Description')">
+                                                <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">Description</div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Item.PurchaseDetails.UnitPrice')" onclick="selectSourceNode(this, 'Item.PurchaseDetails.UnitPrice')">
+                                                <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">PurchaseDetails.UnitPrice</div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Item.SalesDetails.UnitPrice')" onclick="selectSourceNode(this, 'Item.SalesDetails.UnitPrice')">
+                                                <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">SalesDetails.UnitPrice</div>
+                                            </li>
+                                        </ul>
+                                    </li>
+
+                                    <!-- Invoice Subfolder -->
+                                    <li class="schema-folder-node">
+                                        <div class="flex items-center space-x-1 py-0.5 rounded hover:bg-slate-50 cursor-pointer" onclick="toggleFolder(this)">
+                                            <svg class="h-2.5 w-2.5 transform transition-transform duration-150 rotate-90 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                            <span class="font-bold text-slate-800">Invoice</span>
+                                        </div>
+                                        <ul class="pl-3 border-l border-slate-100 ml-1 mt-0.5 space-y-0.5 folder-content">
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Reference')" onclick="selectSourceNode(this, 'Invoice.Reference')">
+                                                <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">Reference</div>
+                                            </li>
+                                            <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Date')" onclick="selectSourceNode(this, 'Invoice.Date')">
+                                                <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">Date</div>
+                                            </li>
+                                            
+                                            <!-- Contact folder -->
+                                            <li class="schema-folder-node">
+                                                <div class="flex items-center space-x-1 py-0.5 rounded hover:bg-slate-50 cursor-pointer" onclick="toggleFolder(this)">
+                                                    <svg class="h-2.5 w-2.5 transform transition-transform duration-150 rotate-90 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                                    </svg>
+                                                    <span class="font-semibold text-slate-700">Contact</span>
+                                                </div>
+                                                <ul class="pl-3 border-l border-slate-100 ml-1 mt-0.5 space-y-0.5 folder-content">
+                                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.Name')" onclick="selectSourceNode(this, 'Invoice.Contact.Name')">
+                                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">Name</div>
+                                                    </li>
+                                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.FirstName')" onclick="selectSourceNode(this, 'Invoice.Contact.FirstName')">
+                                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">FirstName</div>
+                                                    </li>
+                                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.LastName')" onclick="selectSourceNode(this, 'Invoice.Contact.LastName')">
+                                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">LastName</div>
+                                                    </li>
+                                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.EmailAddress')" onclick="selectSourceNode(this, 'Invoice.Contact.EmailAddress')">
+                                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">EmailAddress</div>
+                                                    </li>
+                                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.Contact.AccountNumber')" onclick="selectSourceNode(this, 'Invoice.Contact.AccountNumber')">
+                                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">AccountNumber</div>
+                                                    </li>
+                                                </ul>
+                                            </li>
+
+                                            <!-- LineItems folder -->
+                                            <li class="schema-folder-node">
+                                                <div class="flex items-center space-x-1 py-0.5 rounded hover:bg-slate-50 cursor-pointer" onclick="toggleFolder(this)">
+                                                    <svg class="h-2.5 w-2.5 transform transition-transform duration-150 rotate-90 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                                    </svg>
+                                                    <span class="font-semibold text-slate-700">LineItems[0]</span>
+                                                </div>
+                                                <ul class="pl-3 border-l border-slate-100 ml-1 mt-0.5 space-y-0.5 folder-content">
+                                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.LineItems[0].ItemCode')" onclick="selectSourceNode(this, 'Invoice.LineItems[0].ItemCode')">
+                                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">ItemCode</div>
+                                                    </li>
+                                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.LineItems[0].Description')" onclick="selectSourceNode(this, 'Invoice.LineItems[0].Description')">
+                                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">Description</div>
+                                                    </li>
+                                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.LineItems[0].Quantity')" onclick="selectSourceNode(this, 'Invoice.LineItems[0].Quantity')">
+                                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">Quantity</div>
+                                                    </li>
+                                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.LineItems[0].UnitAmount')" onclick="selectSourceNode(this, 'Invoice.LineItems[0].UnitAmount')">
+                                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">UnitAmount</div>
+                                                    </li>
+                                                    <li class="schema-leaf-node" draggable="true" ondragstart="handleDragStart(event, 'Invoice.LineItems[0].TaxType')" onclick="selectSourceNode(this, 'Invoice.LineItems[0].TaxType')">
+                                                        <div class="py-0.5 px-1 rounded hover:bg-indigo-50/50 hover:text-indigo-700 cursor-grab select-none">TaxType</div>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </aside>
+
+                <!-- Toolbar far right -->
+                <div class="w-8 border-l border-slate-100 flex flex-col items-center py-2 bg-slate-50/30 space-y-3">
+                    <button onclick="toggleSidebar()" class="h-6 w-6 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded flex items-center justify-center font-bold text-[9px] cursor-pointer" title="Schema tree panel">
+                        i/o
+                    </button>
+                    <button class="h-6 w-6 text-slate-400 hover:text-slate-600 rounded flex items-center justify-center font-bold text-[9px] cursor-pointer" title="Functions editor" onclick="alert('Formula editor loaded.')">
+                        fx
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer Save and Add Actions -->
+            <div class="px-6 py-3 border-t border-slate-100 flex items-center justify-between bg-white">
+                <button type="button" onclick="addNewFieldRow()" class="px-3 py-1.5 rounded-lg text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer">
+                    + Add Field
+                </button>
+                <button id="btn-save-mapping" class="px-4 py-2 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all cursor-pointer">
+                    Save Changes
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Real-time Activity and Error Log Terminal Window -->
+    <footer class="w-full p-6 bg-slate-900 border-t border-slate-800 text-emerald-400 font-mono text-xs flex flex-col space-y-3">
+        <div class="max-w-7xl w-full mx-auto flex items-center justify-between border-b border-slate-800 pb-2">
+            <div class="flex items-center space-x-2">
+                <div class="flex space-x-1.5">
+                    <span class="h-3 w-3 bg-red-500 rounded-full"></span>
+                    <span class="h-3 w-3 bg-amber-500 rounded-full"></span>
+                    <span class="h-3 w-3 bg-green-500 rounded-full"></span>
+                </div>
+                <span class="text-slate-400 font-bold ml-2">M.I.R.A. System Terminal</span>
+            </div>
+            <button onclick="clearConsole()" class="text-slate-400 hover:text-emerald-400 transition-colors uppercase font-bold text-[10px] tracking-wider cursor-pointer">
+                Clear Console
+            </button>
+        </div>
+        
+        <!-- Terminal Body -->
+        <div id="terminal-body" class="max-w-7xl w-full mx-auto overflow-y-auto h-48 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-slate-900">
+            <div>[M.I.R.A. Console Initialised. Press 'Run Sync Engine' to process monday.com webhook events.]</div>
+        </div>
+    </footer>
+
+    <!-- Interactive Client Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
