@@ -4,7 +4,7 @@ M.I.R.A. Invoice Data Schemas.
 
 from enum import Enum
 from typing import Any, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from models.contact import Contact
 
 
@@ -23,6 +23,7 @@ class InvoiceStatus(str, Enum):
 
 class InvoiceLineItem(BaseModel):
     """Schema representing an individual line item on an invoice."""
+    model_config = ConfigDict(arbitrary_types_allowed=True, ignored_types=(property,))
     description: str = Field(..., description="Description of product or service")
     quantity: int = Field(..., gt=0, description="Quantity of items")
     unit_amount: float = Field(..., gt=0, description="Unit price per item")
@@ -43,7 +44,7 @@ class InvoiceCreate(BaseModel):
     date: str = Field(..., description="Invoice issue date (YYYY-MM-DD)")
     due_date: str = Field(..., description="Invoice due date (YYYY-MM-DD)")
     reference: Optional[str] = Field(None, description="External transaction reference ID")
-    line_items: List[InvoiceLineItem] = Field(..., min_items=1, description="List of line items")
+    line_items: List[InvoiceLineItem] = Field(..., min_length=1, description="List of line items")
     status: InvoiceStatus = Field(default=InvoiceStatus.DRAFT, description="Target invoice status")
 
 

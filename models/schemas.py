@@ -27,6 +27,8 @@ class Contact(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
         str_strip_whitespace=True,
+        arbitrary_types_allowed=True,
+        ignored_types=(property,),
     )
 
     @field_validator("email")
@@ -85,6 +87,8 @@ class Product(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
         str_strip_whitespace=True,
+        arbitrary_types_allowed=True,
+        ignored_types=(property,),
     )
 
     @property
@@ -120,6 +124,8 @@ class LineItem(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
         str_strip_whitespace=True,
+        arbitrary_types_allowed=True,
+        ignored_types=(property,),
     )
 
     @property
@@ -152,7 +158,7 @@ class Invoice(BaseModel):
     """Schema representing a complete Xero Invoice."""
 
     contact: Contact = Field(..., alias="Contact", description="Associated Xero Contact/Account")
-    line_items: List[LineItem] = Field(..., alias="LineItems", min_items=1, description="Invoice line items list")
+    line_items: List[LineItem] = Field(..., alias="LineItems", min_length=1, description="Invoice line items list")
     issue_date: str = Field(..., alias="IssueDate", description="Invoice issue date (YYYY-MM-DD)")
     due_date: str = Field(..., alias="DueDate", description="Invoice due date (YYYY-MM-DD)")
     status: str = Field("DRAFT", alias="Status", description="Xero invoice status (DRAFT, AUTHORISED, etc.)")
@@ -160,6 +166,8 @@ class Invoice(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
         str_strip_whitespace=True,
+        arbitrary_types_allowed=True,
+        ignored_types=(property,),
     )
 
     @property
