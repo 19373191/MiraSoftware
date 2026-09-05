@@ -263,6 +263,30 @@ async def test_monday_connection(
         return {"status": "error", "message": f"Connection test failed: {str(exc)}"}
 
 
+def get_xero_redirect_uri(request: Request) -> str:
+    """
+    Dynamically computes the Xero OAuth redirect URI.
+    Supports local development (localhost:8000), production on Render/cloud (HTTPS),
+    and explicit XERO_REDIRECT_URI environment configurations.
+    """
+    # 1. If explicit production redirect URI is set in settings and not pointing to localhost
+    if settings.xero_redirect_uri and "localhost" not in settings.xero_redirect_uri and "127.0.0.1" not in settings.xero_redirect_uri:
+        uri = settings.xero_redirect_uri.strip()
+        if not (uri.endswith("/oauth/xero/callback") or uri.endswith("/callback")):
+            uri = uri.rstrip("/") + "/oauth/xero/callback"
+        return uri
+
+    # 2. Derive dynamically from request headers (supporting reverse proxies like Render)
+    proto = request.headers.get("x-forwarded-proto") or (request.url.scheme if hasattr(request, "url") else "http")
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "localhost:8000"
+
+    # Enforce https if on cloud / external domain (like onrender.com)
+    if "localhost" not in host and "127.0.0.1" not in host:
+        proto = "https"
+
+    return f"{proto}://{host}/oauth/xero/callback"
+
+
 @router.get("/oauth/xero/connect")
 async def xero_oauth_connect(
     request: Request,
@@ -270,22 +294,16 @@ async def xero_oauth_connect(
 ):
     """Redirects user to Xero OAuth 2.0 authorization endpoint."""
     user_id = getattr(current_user, "id", 1)
-    base_url = getattr(request, "base_url", None)
-    netloc = base_url.netloc if base_url else "localhost:8000"
-    
-    port = "8000"
-    if ":" in netloc:
-        port = netloc.split(":")[-1]
+    redirect_uri = get_xero_redirect_uri(request)
 
-    # Must use port 8000 callback URI since it's the only registered URI in Xero Developer console
-    redirect_uri = "http://localhost:8000/oauth/xero/callback"
     oauth_handler = OAuthHandler(redirect_uri=redirect_uri)
-    auth_url = oauth_handler.get_authorization_url(state=f"user_{user_id}_port_{port}")
-    logger.info("Redirecting user %s to Xero consent URL...", getattr(current_user, "email", "user"))
+    auth_url = oauth_handler.get_authorization_url(state=f"user_{user_id}")
+    logger.info("Redirecting user %s to Xero consent URL (redirect_uri: %s)...", getattr(current_user, "email", "user"), redirect_uri)
     return RedirectResponse(url=auth_url, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/oauth/xero/callback")
+@router.get("/callback")
 async def xero_oauth_callback(
     request: Request,
     code: Optional[str] = None,
@@ -297,23 +315,16 @@ async def xero_oauth_callback(
     OAuth 2.0 callback endpoint handling Xero authorization code exchange.
     Stores tokens in database and redirects back to /connectors.
     """
-    target_port = "8000"
-    if state and "_port_" in state:
-        try:
-            target_port = state.split("_port_")[-1]
-        except Exception:
-            pass
-
     if error:
         logger.error("Xero OAuth callback returned error: %s", error)
         return RedirectResponse(
-            url=f"http://localhost:{target_port}/connectors?error=Xero+Authorization+Error:+{error}",
+            url=f"/connectors?error=Xero+Authorization+Error:+{error}",
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
     if not code:
         return RedirectResponse(
-            url=f"http://localhost:{target_port}/connectors?error=Missing+authorization+code+from+Xero.",
+            url="/connectors?error=Missing+authorization+code+from+Xero.",
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
@@ -321,7 +332,7 @@ async def xero_oauth_callback(
     if not current_user:
         if state and db:
             try:
-                # state starts with user_<id>_
+                # state starts with user_<id>
                 parts = state.split("_")
                 if len(parts) >= 2 and parts[0] == "user":
                     uid = int(parts[1])
@@ -331,20 +342,19 @@ async def xero_oauth_callback(
 
     if not current_user and db:
         return RedirectResponse(
-            url=f"http://localhost:{target_port}/login?error=Session+expired+during+OAuth+flow.+Please+login.",
+            url="/login?error=Session+expired+during+OAuth+flow.+Please+login.",
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
     if current_user and current_user.role not in ("super_admin", "admin"):
         logger.warning("User '%s' with role '%s' attempted to complete Xero OAuth authorization.", current_user.email, current_user.role)
         return RedirectResponse(
-            url=f"http://localhost:{target_port}/?error=Insufficient+permissions+to+configure+connectors.",
+            url="/?error=Insufficient+permissions+to+configure+connectors.",
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
     try:
-        # Must use port 8000 redirect URI for token exchange
-        redirect_uri = "http://localhost:8000/oauth/xero/callback"
+        redirect_uri = get_xero_redirect_uri(request)
         oauth_handler = OAuthHandler(redirect_uri=redirect_uri)
         token_data = oauth_handler.exchange_code_for_token(code)
 
@@ -403,13 +413,13 @@ async def xero_oauth_callback(
 
         logger.info("Successfully connected Xero OAuth for user %s", getattr(current_hash_user := current_user, "email", "user"))
         return RedirectResponse(
-            url=f"http://localhost:{target_port}/connectors?success=Xero+Developer+Sandbox+connected+successfully!",
+            url="/connectors?success=Xero+Developer+Sandbox+connected+successfully!",
             status_code=status.HTTP_303_SEE_OTHER,
         )
     except Exception as exc:
         logger.error("Failed to exchange Xero auth code: %s", exc)
         return RedirectResponse(
-            url=f"http://localhost:{target_port}/connectors?error=Token+exchange+failed:+{str(exc)}",
+            url=f"/connectors?error=Token+exchange+failed:+{str(exc)}",
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
