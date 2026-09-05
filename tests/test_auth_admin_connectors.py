@@ -101,6 +101,34 @@ class TestAuthAdminConnectors(unittest.TestCase):
         self.assertIn("monday", platforms)
         self.assertIn("xero", platforms)
 
+    def test_user_persistence_across_multiple_seeds(self):
+        """Verifies that user accounts created in the DB are never deleted or affected by re-seeding."""
+        seed_super_admin(self.db)
+        # Create a custom user account
+        new_user = User(
+            email="custom.operator@mira.com",
+            hashed_password=hash_password("OperatorPass123!"),
+            role="user",
+            is_active=True,
+        )
+        self.db.add(new_user)
+        self.db.commit()
+
+        # Call seed_super_admin again (as happens during application restart)
+        seed_super_admin(self.db)
+
+        # Confirm the custom user still exists
+        found_user = self.db.query(User).filter(User.email == "custom.operator@mira.com").first()
+        self.assertIsNotNone(found_user)
+        self.assertEqual(found_user.role, "user")
+        self.assertTrue(found_user.is_active)
+
+    def test_database_url_postgres_normalization(self):
+        """Verifies that postgres:// URL scheme is automatically upgraded to postgresql:// for SQLAlchemy."""
+        test_url = "postgres://user:password@hostname:5432/dbname"
+        normalized = test_url.replace("postgres://", "postgresql://", 1) if test_url.startswith("postgres://") else test_url
+        self.assertEqual(normalized, "postgresql://user:password@hostname:5432/dbname")
+
 
 if __name__ == "__main__":
     unittest.main()

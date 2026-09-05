@@ -80,16 +80,35 @@ except ImportError:
     def ForeignKey(*args, **kwargs): return None
     Session = Any
 
-# SQLite Database URL
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mira.db")
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
+# Database URL configuration (PostgreSQL or SQLite)
+raw_db_url = os.getenv("DATABASE_URL")
+if raw_db_url:
+    # Render and Heroku PostgreSQL URLs start with postgres://, which SQLAlchemy 1.4/2.0 requires postgresql://
+    if raw_db_url.startswith("postgres://"):
+        raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URL = raw_db_url
+else:
+    # Check for optional persistent storage directory (e.g. Render Persistent Disk mounted at /data or /var/data)
+    data_dir = os.getenv("DATA_DIR") or os.getenv("PERSISTENT_DATA_DIR")
+    if data_dir:
+        os.makedirs(data_dir, exist_ok=True)
+        DB_PATH = os.path.join(data_dir, "mira.db")
+    else:
+        DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mira.db")
+    SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 if has_sqlalchemy:
     try:
-        engine = create_engine(
-            SQLALCHEMY_DATABASE_URL,
-            connect_args={"check_same_thread": False},
-        )
+        if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+            engine = create_engine(
+                SQLALCHEMY_DATABASE_URL,
+                connect_args={"check_same_thread": False},
+            )
+        else:
+            engine = create_engine(
+                SQLALCHEMY_DATABASE_URL,
+                pool_pre_ping=True,
+            )
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     except Exception:
         engine = None
@@ -348,27 +367,28 @@ def init_db() -> None:
         try:
             Base.metadata.create_all(bind=engine)
             
-            # Check if board_id column exists in field_mappings table
-            with engine.connect() as conn:
-                from sqlalchemy import text
-                result = conn.execute(text("PRAGMA table_info(field_mappings)")).fetchall()
-                column_names = [row[1] for row in result]
-                if "board_id" not in column_names:
-                    conn.execute(text("ALTER TABLE field_mappings ADD COLUMN board_id VARCHAR"))
-                    try:
-                        conn.commit()
-                    except Exception:
-                        pass
+            # Check if board_id column exists in field_mappings table (SQLite migrations)
+            if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+                with engine.connect() as conn:
+                    from sqlalchemy import text
+                    result = conn.execute(text("PRAGMA table_info(field_mappings)")).fetchall()
+                    column_names = [row[1] for row in result]
+                    if "board_id" not in column_names:
+                        conn.execute(text("ALTER TABLE field_mappings ADD COLUMN board_id VARCHAR"))
+                        try:
+                            conn.commit()
+                        except Exception:
+                            pass
 
-                # Check if direction column exists in sync_logs table
-                result_logs = conn.execute(text("PRAGMA table_info(sync_logs)")).fetchall()
-                column_names_logs = [row[1] for row in result_logs]
-                if "direction" not in column_names_logs:
-                    conn.execute(text("ALTER TABLE sync_logs ADD COLUMN direction VARCHAR"))
-                    try:
-                        conn.commit()
-                    except Exception:
-                        pass
+                    # Check if direction column exists in sync_logs table
+                    result_logs = conn.execute(text("PRAGMA table_info(sync_logs)")).fetchall()
+                    column_names_logs = [row[1] for row in result_logs]
+                    if "direction" not in column_names_logs:
+                        conn.execute(text("ALTER TABLE sync_logs ADD COLUMN direction VARCHAR"))
+                        try:
+                            conn.commit()
+                        except Exception:
+                            pass
         except Exception:
             pass
 
