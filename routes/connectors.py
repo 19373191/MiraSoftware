@@ -266,15 +266,17 @@ async def test_monday_connection(
 def get_xero_redirect_uri(request: Request) -> str:
     """
     Dynamically computes the Xero OAuth redirect URI.
-    Supports local development (localhost:8000), production on Render/cloud (HTTPS),
-    and explicit XERO_REDIRECT_URI environment configurations.
+    Ensures the path is always /oauth/xero/callback, whether running locally,
+    on Render, or configured via XERO_REDIRECT_URI.
     """
     # 1. If explicit production redirect URI is set in settings and not pointing to localhost
     if settings.xero_redirect_uri and "localhost" not in settings.xero_redirect_uri and "127.0.0.1" not in settings.xero_redirect_uri:
-        uri = settings.xero_redirect_uri.strip()
-        if not (uri.endswith("/oauth/xero/callback") or uri.endswith("/callback")):
-            uri = uri.rstrip("/") + "/oauth/xero/callback"
-        return uri
+        uri = settings.xero_redirect_uri.strip().rstrip("/")
+        if uri.endswith("/callback") and not uri.endswith("/oauth/xero/callback"):
+            uri = uri[:-9]  # strip /callback
+        elif uri.endswith("/oauth/xero/callback"):
+            uri = uri[:-20]  # strip /oauth/xero/callback
+        return f"{uri}/oauth/xero/callback"
 
     # 2. Derive dynamically from request headers (supporting reverse proxies like Render)
     proto = request.headers.get("x-forwarded-proto") or (request.url.scheme if hasattr(request, "url") else "http")
