@@ -9,7 +9,7 @@ try:
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
     from models.db import Base, User, FieldMapping
-    from routes.mappings import ensure_user_mappings, DEFAULT_MAPPING_VERSION, DEFAULT_MAPPINGS
+    from routes.mappings import ensure_user_mappings, DEFAULT_MAPPING_VERSION, DEFAULT_MAPPINGS, get_column_title, DEFAULT_COLUMN_TITLES
     has_sqlalchemy = True
 except ImportError:
     has_sqlalchemy = False
@@ -86,6 +86,26 @@ class TestMappingsRouter(unittest.TestCase):
 
         self.assertEqual(len(mappings_b1), 1)
         self.assertEqual(mappings_b1[0].source_column, "b1_ref")
+
+    def test_column_title_helper_and_defaults(self):
+        """Verifies get_column_title helper returns friendly column titles."""
+        # 1. From DEFAULT_COLUMN_TITLES
+        self.assertEqual(get_column_title("transaction_id"), "Transaction ID")
+        self.assertEqual(get_column_title("company_name"), "Company Name")
+        self.assertEqual(get_column_title("unit_price"), "Unit Price")
+        self.assertEqual(get_column_title("cost_price"), "Cost Price")
+
+        # 2. From board_columns list
+        mock_board_columns = [
+            {"id": "col_custom_1", "title": "Account Number"},
+            {"id": "numeric_mm6631e9", "title": "Invoice Total"}
+        ]
+        self.assertEqual(get_column_title("col_custom_1", mock_board_columns), "Account Number")
+        self.assertEqual(get_column_title("numeric_mm6631e9", mock_board_columns), "Invoice Total")
+
+        # 3. Fallback formatting
+        self.assertEqual(get_column_title("my_custom_field"), "My Custom Field")
+        self.assertEqual(get_column_title(""), "")
 
 
 if __name__ == "__main__":

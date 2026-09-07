@@ -76,6 +76,8 @@ class MondayConnector:
                     items {
                         id
                         name
+                        created_at
+                        updated_at
                         column_values {
                             id
                             column {

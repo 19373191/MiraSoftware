@@ -154,6 +154,7 @@ def generate_mock_payloads(count: int = 500) -> List[Dict[str, Any]]:
 async def sync_live_stream(
     request: Request,
     direction: str = "xero_to_monday",
+    since_date: Optional[str] = None,
     board_id_1: Optional[str] = None,
     board_id_3: Optional[str] = None,
     batch_count: int = 500,
@@ -171,10 +172,19 @@ async def sync_live_stream(
         start_time = time.time()
         user_id = getattr(current_user, "id", 1)
 
-        # Lookup last successful sync log for the current direction
+        # Lookup cutoff_time: custom since_date or last successful sync log for current direction
         last_sync = None
         cutoff_time = None
-        if db:
+        custom_cutoff = False
+
+        if since_date and since_date.strip():
+            parsed_since = parse_xero_date(since_date.strip())
+            if parsed_since:
+                cutoff_time = parsed_since.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+                custom_cutoff = True
+                logger.info("Live stream using custom since_date filter: %s -> %s", since_date, cutoff_time)
+
+        if not custom_cutoff and db:
             try:
                 last_sync = (
                     db.query(SyncLog)
@@ -188,10 +198,10 @@ async def sync_live_stream(
             except Exception as e:
                 logger.warning("Could not fetch last SyncLog: %s", e)
 
-        if last_sync and last_sync.timestamp:
-            cutoff_time = last_sync.timestamp
-            if cutoff_time.tzinfo is None:
-                cutoff_time = cutoff_time.replace(tzinfo=timezone.utc)
+            if last_sync and last_sync.timestamp:
+                cutoff_time = last_sync.timestamp
+                if cutoff_time.tzinfo is None:
+                    cutoff_time = cutoff_time.replace(tzinfo=timezone.utc)
 
         # Fetch credentials and dry-run flag for both sync directions
         from models.db import Credentials
@@ -203,7 +213,10 @@ async def sync_live_stream(
             yield f"data: {json.dumps({'percent': 5, 'log': ' Initializing Xero to Monday.com Synchronization...', 'status': 'IN_PROGRESS'})}\n\n"
             time.sleep(0.1)
 
-            if cutoff_time:
+            if custom_cutoff and cutoff_time:
+                log_msg = f" Filtering records created/modified on or after {cutoff_time.strftime('%Y-%m-%d')} (User Specified Date Filter)."
+                yield f"data: {json.dumps({'percent': 8, 'log': log_msg, 'status': 'IN_PROGRESS'})}\n\n"
+            elif cutoff_time:
                 log_msg = f" Last successful sync was at {cutoff_time.strftime('%Y-%m-%d %H:%M:%S')} UTC. Filtering new/modified data."
                 yield f"data: {json.dumps({'percent': 8, 'log': log_msg, 'status': 'IN_PROGRESS'})}\n\n"
             else:
@@ -232,7 +245,7 @@ async def sync_live_stream(
                 ]
                 
                 if cutoff_time:
-                    mock_contacts = [c for c in mock_contacts if parse_xero_date(c.get("UpdatedDateUTC")) > cutoff_time]
+                    mock_contacts = [c for c in mock_contacts if parse_xero_date(c.get("UpdatedDateUTC")) and parse_xero_date(c.get("UpdatedDateUTC")) >= cutoff_time]
 
                 total_contacts = len(mock_contacts)
                 yield f"data: {json.dumps({'percent': 18, 'log': f' [Simulated] Retrieved {total_contacts} contacts from Xero after filtering.', 'status': 'IN_PROGRESS'})}\n\n"
@@ -312,7 +325,7 @@ async def sync_live_stream(
                 ]
                 
                 if cutoff_time:
-                    mock_items = [item for item in mock_items if parse_xero_date(item.get("UpdatedDateUTC")) > cutoff_time]
+                    mock_items = [item for item in mock_items if parse_xero_date(item.get("UpdatedDateUTC")) and parse_xero_date(item.get("UpdatedDateUTC")) >= cutoff_time]
                     
                 total_items = len(mock_items)
                 yield f"data: {json.dumps({'percent': 65, 'log': f' [Simulated] Retrieved {total_items} products/items from Xero.', 'status': 'IN_PROGRESS'})}\n\n"
@@ -375,6 +388,7 @@ async def sync_live_stream(
                         "Status": "DRAFT",
                         "Total": 1200.0,
                         "DateString": "2026-08-25",
+                        "UpdatedDateUTC": (now_utc - timedelta(hours=1)).isoformat() + "Z",
                         "Contact": {"Name": "Acme Corp", "EmailAddress": "billing@acme.com"},
                         "LineItems": [
                             {"Description": "Consulting Services", "Quantity": 2, "UnitAmount": 500.0, "ItemCode": "PRD-003"},
@@ -382,6 +396,9 @@ async def sync_live_stream(
                         ]
                     }
                 ]
+                
+                if cutoff_time:
+                    mock_invoices = [inv for inv in mock_invoices if (parse_xero_date(inv.get("UpdatedDateUTC") or inv.get("DateString") or inv.get("Date")) is None or parse_xero_date(inv.get("UpdatedDateUTC") or inv.get("DateString") or inv.get("Date")) >= cutoff_time)]
                 
                 total_invoices = len(mock_invoices)
                 yield f"data: {json.dumps({'percent': 92, 'log': f' [Simulated] Retrieved {total_invoices} invoices from Xero.', 'status': 'IN_PROGRESS'})}\n\n"
@@ -499,7 +516,7 @@ async def sync_live_stream(
                 return
 
             if cutoff_time:
-                contacts = [c for c in contacts if parse_xero_date(c.get("UpdatedDateUTC")) is None or parse_xero_date(c.get("UpdatedDateUTC")) > cutoff_time]
+                contacts = [c for c in contacts if parse_xero_date(c.get("UpdatedDateUTC")) is None or parse_xero_date(c.get("UpdatedDateUTC")) >= cutoff_time]
 
             total_contacts = len(contacts)
             yield f"data: {json.dumps({'percent': 18, 'log': f' Retrieved {total_contacts} contacts from Xero after filtering.', 'status': 'IN_PROGRESS'})}\n\n"
@@ -572,7 +589,7 @@ async def sync_live_stream(
                 return
 
             if cutoff_time:
-                items = [it for it in items if parse_xero_date(it.get("UpdatedDateUTC")) is None or parse_xero_date(it.get("UpdatedDateUTC")) > cutoff_time]
+                items = [it for it in items if parse_xero_date(it.get("UpdatedDateUTC")) is None or parse_xero_date(it.get("UpdatedDateUTC")) >= cutoff_time]
 
             total_items = len(items)
             yield f"data: {json.dumps({'percent': 65, 'log': f' Retrieved {total_items} products/items from Xero.', 'status': 'IN_PROGRESS'})}\n\n"
@@ -643,7 +660,7 @@ async def sync_live_stream(
                 return
 
             if cutoff_time:
-                invoices = [inv for inv in invoices if parse_xero_date(inv.get("UpdatedDateUTC")) is None or parse_xero_date(inv.get("UpdatedDateUTC")) > cutoff_time]
+                invoices = [inv for inv in invoices if parse_xero_date(inv.get("UpdatedDateUTC")) is None or parse_xero_date(inv.get("UpdatedDateUTC")) >= cutoff_time]
 
             total_invoices = len(invoices)
             yield f"data: {json.dumps({'percent': 92, 'log': f' Retrieved {total_invoices} invoices from Xero.', 'status': 'IN_PROGRESS'})}\n\n"
@@ -859,7 +876,10 @@ async def sync_live_stream(
             yield f"data: {json.dumps({'percent': 5, 'log': ' Initializing M.I.R.A. Synchronization Engine...', 'status': 'IN_PROGRESS'})}\n\n"
             time.sleep(0.1)
 
-            if cutoff_time:
+            if custom_cutoff and cutoff_time:
+                log_msg = f" Filtering records created/modified on or after {cutoff_time.strftime('%Y-%m-%d')} (User Specified Date Filter)."
+                yield f"data: {json.dumps({'percent': 8, 'log': log_msg, 'status': 'IN_PROGRESS'})}\n\n"
+            elif cutoff_time:
                 log_msg = f" Last successful sync was at {cutoff_time.strftime('%Y-%m-%d %H:%M:%S')} UTC. Filtering new/modified data."
                 yield f"data: {json.dumps({'percent': 8, 'log': log_msg, 'status': 'IN_PROGRESS'})}\n\n"
             else:
@@ -895,7 +915,7 @@ async def sync_live_stream(
                 payloads = generate_mock_payloads(batch_count)
                 
                 if cutoff_time:
-                    payloads = [p for p in payloads if parse_xero_date(p.get("updated_at")) is None or parse_xero_date(p.get("updated_at")) > cutoff_time]
+                    payloads = [p for p in payloads if parse_xero_date(p.get("updated_at")) is None or parse_xero_date(p.get("updated_at")) >= cutoff_time]
                 
                 total_payloads = len(payloads)
                 if total_payloads == 0:
@@ -1011,6 +1031,14 @@ async def sync_live_stream(
                     yield f"data: {json.dumps({'percent': 25, 'log': f' Failed to fetch items from Monday.com: {e}', 'status': 'ERROR'})}\n\n"
                     return
                 
+                if cutoff_time:
+                    def _is_item_after_cutoff(it):
+                        item_date = parse_xero_date(it.get("updated_at") or it.get("created_at"))
+                        if not item_date:
+                            return True
+                        return item_date >= cutoff_time
+                    board_items = [it for it in board_items if _is_item_after_cutoff(it)]
+
                 yield f"data: {json.dumps({'percent': 45, 'log': f' Retrieved {len(board_items)} items from board. Transforming to Xero Invoices...', 'status': 'IN_PROGRESS'})}\n\n"
                 
                 transformed_invoices = []
@@ -1150,6 +1178,7 @@ def run_spa_sync_in_background(
     group_by_company: bool,
     target_account: str,
     user_id: int,
+    since_date: Optional[str] = None,
 ):
     global SPA_LOGS
     SPA_LOGS.clear()
@@ -1171,10 +1200,19 @@ def run_spa_sync_in_background(
     
     db = SessionLocal()
     try:
-        # Fetch last successful sync time
+        # Fetch last successful sync time or use custom since_date
         last_sync = None
         cutoff_time = None
-        if db:
+        custom_cutoff = False
+
+        if since_date and since_date.strip():
+            parsed_since = parse_xero_date(since_date.strip())
+            if parsed_since:
+                cutoff_time = parsed_since.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+                custom_cutoff = True
+                logger.info("SPA sync background using custom since_date filter: %s -> %s", since_date, cutoff_time)
+
+        if not custom_cutoff and db:
             try:
                 last_sync = (
                     db.query(SyncLog)
@@ -1188,12 +1226,14 @@ def run_spa_sync_in_background(
             except Exception as e:
                 logger.warning("Could not fetch last SyncLog in SPA background: %s", e)
 
-        if last_sync and last_sync.timestamp:
-            cutoff_time = last_sync.timestamp
-            if cutoff_time.tzinfo is None:
-                cutoff_time = cutoff_time.replace(tzinfo=timezone.utc)
+            if last_sync and last_sync.timestamp:
+                cutoff_time = last_sync.timestamp
+                if cutoff_time.tzinfo is None:
+                    cutoff_time = cutoff_time.replace(tzinfo=timezone.utc)
 
-        if cutoff_time:
+        if custom_cutoff and cutoff_time:
+            log(f" Filtering records created/modified on or after {cutoff_time.strftime('%Y-%m-%d')} (User Specified Date Filter).")
+        elif cutoff_time:
             log(f" Last successful sync was at {cutoff_time.strftime('%Y-%m-%d %H:%M:%S')} UTC. Filtering new/modified data.")
         else:
             log(" No prior successful sync found for this direction. Processing all records.")
@@ -1226,7 +1266,7 @@ def run_spa_sync_in_background(
                 ]
                 
                 if cutoff_time:
-                    mock_contacts = [c for c in mock_contacts if parse_xero_date(c.get("UpdatedDateUTC")) > cutoff_time]
+                    mock_contacts = [c for c in mock_contacts if parse_xero_date(c.get("UpdatedDateUTC")) and parse_xero_date(c.get("UpdatedDateUTC")) >= cutoff_time]
                 
                 log(f" [Simulated] Retrieved {len(mock_contacts)} contacts from Xero after filtering.")
                 
@@ -1244,7 +1284,7 @@ def run_spa_sync_in_background(
                     {"Name": "Custom Flow Consultant", "Code": "PRD-003", "Description": "Hourly specialist engineering support", "PurchaseDetails": {"UnitPrice": 75.0}, "SalesDetails": {"UnitPrice": 150.0}, "UpdatedDateUTC": (now_utc - timedelta(hours=3)).isoformat() + "Z"},
                 ]
                 if cutoff_time:
-                    mock_items = [it for it in mock_items if parse_xero_date(it.get("UpdatedDateUTC")) > cutoff_time]
+                    mock_items = [it for it in mock_items if parse_xero_date(it.get("UpdatedDateUTC")) and parse_xero_date(it.get("UpdatedDateUTC")) >= cutoff_time]
                 
                 log(f" [Simulated] Retrieved {len(mock_items)} products/items from Xero.")
                 
@@ -1266,6 +1306,7 @@ def run_spa_sync_in_background(
                         "Status": "DRAFT",
                         "Total": 1200.0,
                         "DateString": "2026-08-25",
+                        "UpdatedDateUTC": (now_utc - timedelta(hours=1)).isoformat() + "Z",
                         "Contact": {"Name": "Acme Corp", "EmailAddress": "billing@acme.com"},
                         "LineItems": [
                             {"Description": "Consulting Services", "Quantity": 2, "UnitAmount": 500.0, "ItemCode": "PRD-003"},
@@ -1274,6 +1315,9 @@ def run_spa_sync_in_background(
                     }
                 ]
                 
+                if cutoff_time:
+                    mock_invoices = [inv for inv in mock_invoices if (parse_xero_date(inv.get("UpdatedDateUTC") or inv.get("DateString") or inv.get("Date")) is None or parse_xero_date(inv.get("UpdatedDateUTC") or inv.get("DateString") or inv.get("Date")) >= cutoff_time)]
+
                 total_invoices = len(mock_invoices)
                 log(f" [Simulated] Retrieved {total_invoices} invoices from Xero.")
                 time.sleep(0.3)
@@ -1351,7 +1395,7 @@ def run_spa_sync_in_background(
 
                 contacts = xero_conn.get_contacts()
                 if cutoff_time:
-                    contacts = [c for c in contacts if parse_xero_date(c.get("UpdatedDateUTC")) is None or parse_xero_date(c.get("UpdatedDateUTC")) > cutoff_time]
+                    contacts = [c for c in contacts if parse_xero_date(c.get("UpdatedDateUTC")) is None or parse_xero_date(c.get("UpdatedDateUTC")) >= cutoff_time]
                 log(f" Retrieved {len(contacts)} contacts from Xero after filtering.")
                 
                 board_mappings = {}
@@ -1402,7 +1446,7 @@ def run_spa_sync_in_background(
                 log(" Fetching products/items from Xero...")
                 items = xero_conn.get_items()
                 if cutoff_time:
-                    items = [it for it in items if parse_xero_date(it.get("UpdatedDateUTC")) is None or parse_xero_date(it.get("UpdatedDateUTC")) > cutoff_time]
+                    items = [it for it in items if parse_xero_date(it.get("UpdatedDateUTC")) is None or parse_xero_date(it.get("UpdatedDateUTC")) >= cutoff_time]
                 log(f" Retrieved {len(items)} products/items from Xero.")
 
                 mappings_b3 = db.query(FieldMapping).filter(FieldMapping.board_id == target_board_3).all()
@@ -1468,7 +1512,7 @@ def run_spa_sync_in_background(
                     return
 
                 if cutoff_time:
-                    invoices = [inv for inv in invoices if parse_xero_date(inv.get("UpdatedDateUTC")) is None or parse_xero_date(inv.get("UpdatedDateUTC")) > cutoff_time]
+                    invoices = [inv for inv in invoices if parse_xero_date(inv.get("UpdatedDateUTC")) is None or parse_xero_date(inv.get("UpdatedDateUTC")) >= cutoff_time]
 
                 total_invoices = len(invoices)
                 log(f" Retrieved {total_invoices} invoices from Xero.")
@@ -1688,7 +1732,7 @@ def run_spa_sync_in_background(
                 log(f" Generating {batch_count} transaction payloads...")
                 payloads = generate_mock_payloads(batch_count)
                 if cutoff_time:
-                    payloads = [p for p in payloads if parse_xero_date(p.get("updated_at")) is None or parse_xero_date(p.get("updated_at")) > cutoff_time]
+                    payloads = [p for p in payloads if parse_xero_date(p.get("updated_at")) is None or parse_xero_date(p.get("updated_at")) >= cutoff_time]
 
                 total_payloads = len(payloads)
                 if total_payloads == 0:
@@ -1790,6 +1834,14 @@ def run_spa_sync_in_background(
                 except Exception as e:
                     log(f" Failed to fetch items from Monday.com: {e}", "ERROR")
                     return
+
+                if cutoff_time:
+                    def _is_item_after_cutoff(it):
+                        item_date = parse_xero_date(it.get("updated_at") or it.get("created_at"))
+                        if not item_date:
+                            return True
+                        return item_date >= cutoff_time
+                    board_items = [it for it in board_items if _is_item_after_cutoff(it)]
                 
                 log(f" Retrieved {len(board_items)} items from board. Transforming to Xero Invoices...")
                 transformed_invoices = []
@@ -1941,6 +1993,7 @@ async def run_sync_from_spa(
     POST endpoint called by SPA dashboard to trigger a background sync task.
     """
     direction = payload.get("direction", "xero_to_monday")
+    since_date = payload.get("since_date")
     board_id_1 = payload.get("board_id_1")
     board_id_3 = payload.get("board_id_3") or "5101138235"
     batch_count = int(payload.get("batch_count", 100))
@@ -1956,7 +2009,8 @@ async def run_sync_from_spa(
         batch_count,
         group_by_company,
         target_account,
-        user_id
+        user_id,
+        since_date
     )
     
     return Response(

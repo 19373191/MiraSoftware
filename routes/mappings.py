@@ -47,6 +47,106 @@ templates = Jinja2Templates(directory="templates")
 
 DEFAULT_MAPPING_VERSION = "v2.0.4"
 
+DEFAULT_COLUMN_TITLES: Dict[str, str] = {
+    # Customer Board (5101138223) Columns from Monday
+    "name": "Name",
+    "text_mm663vnh": "Account Number",
+    "text_mm66sr6t": "First Name",
+    "text_mm668mv4": "Last Name",
+    "status": "Status",
+    "date4": "Date",
+    "text_mm66cg69": "Phone",
+    "email_mm5w89d8": "Email",
+    "text_mm5wwdh": "Address",
+    "text_mm66zhdw": "Xero ID",
+    "board_relation_mm67g8vx": "Link to Invoices",
+    "text_mm6xnhdy": "Holidays",
+    # Invoice Board (5101138242) Columns from Monday
+    "numeric_mm6631e9": "Invoice Total",
+    "numeric_mm66h8ce": "Invoice Total",
+    "delivery_address": "Delivery Address",
+    "text_mm66zpe0": "Delivery Address",
+    "board_relation_mm67qge0": "Contact",
+    "board_relation_mm6jp0r9": "Products (Subitem)",
+    "numeric_mm66tnmw": "Quantity (Subitem)",
+    "numeric_mm662hn4": "Unit Amount (Subitem)",
+    "lookup_mm6j8ck6": "Description (Subitem)",
+    # Product Board (5101138235) Columns from Monday
+    "item_name": "Item Name",
+    "item_number": "Item Code",
+    "description": "Description",
+    "cost_price": "Cost Price",
+    "selling_price": "Selling Price",
+    # Legacy / prototype columns
+    "transaction_id": "Transaction ID",
+    "company_name": "Company Name",
+    "customer_first_name": "Customer First Name",
+    "customer_last_name": "Customer Last Name",
+    "email_address": "Email Address",
+    "item_description": "Item Description",
+    "quantity": "Quantity",
+    "unit_price": "Unit Price",
+}
+
+
+def get_column_title(column_id: str, board_columns: Optional[List[Dict[str, Any]]] = None) -> str:
+    """Returns a user-friendly display title for a Monday.com column identifier."""
+    if not column_id:
+        return ""
+    if board_columns:
+        for col in board_columns:
+            if col.get("id") == column_id and col.get("title") and col.get("title") != column_id:
+                return col["title"]
+    if column_id in DEFAULT_COLUMN_TITLES:
+        return DEFAULT_COLUMN_TITLES[column_id]
+    cleaned = column_id.replace("_", " ").strip()
+    return cleaned.title() if cleaned else column_id
+
+
+DEFAULT_CUSTOMER_MAPPINGS = [
+    {
+        "source_column": "name",
+        "target_xero_path": "Invoice.Contact.Name",
+        "custom_override_path": "Contact.Name",
+    },
+    {
+        "source_column": "text_mm663vnh",
+        "target_xero_path": "Invoice.Contact.AccountNumber",
+        "custom_override_path": "",
+    },
+    {
+        "source_column": "text_mm66sr6t",
+        "target_xero_path": "Invoice.Contact.FirstName",
+        "custom_override_path": "",
+    },
+    {
+        "source_column": "text_mm668mv4",
+        "target_xero_path": "Invoice.Contact.LastName",
+        "custom_override_path": "",
+    },
+    {
+        "source_column": "email_mm5w89d8",
+        "target_xero_path": "Invoice.Contact.EmailAddress",
+        "custom_override_path": "",
+    },
+    {
+        "source_column": "text_mm66cg69",
+        "target_xero_path": "Invoice.Contact.Phone",
+        "custom_override_path": "",
+    },
+    {
+        "source_column": "text_mm5wwdh",
+        "target_xero_path": "Invoice.Contact.Address",
+        "custom_override_path": "",
+    },
+    {
+        "source_column": "text_mm66zhdw",
+        "target_xero_path": "Invoice.Contact.ContactID",
+        "custom_override_path": "",
+    },
+]
+
+
 DEFAULT_MAPPINGS = [
     {
         "source_column": "transaction_id",
@@ -169,12 +269,28 @@ DEFAULT_PRODUCT_MAPPINGS = [
 ]
 
 
-def ensure_user_mappings(db: Session, user_id: int, board_id: Optional[str] = "default", is_invoice: bool = False, is_product: bool = False) -> List[FieldMapping]:
+DEFAULT_CUSTOMER_COLUMNS = [
+    {"id": "name", "title": "Name", "type": "text"},
+    {"id": "text_mm663vnh", "title": "Account Number", "type": "text"},
+    {"id": "text_mm66sr6t", "title": "First Name", "type": "text"},
+    {"id": "text_mm668mv4", "title": "Last Name", "type": "text"},
+    {"id": "status", "title": "Status", "type": "color"},
+    {"id": "date4", "title": "Date", "type": "date"},
+    {"id": "text_mm66cg69", "title": "Phone", "type": "text"},
+    {"id": "email_mm5w89d8", "title": "Email", "type": "email"},
+    {"id": "text_mm5wwdh", "title": "Address", "type": "text"},
+    {"id": "text_mm66zhdw", "title": "Xero ID", "type": "text"},
+    {"id": "board_relation_mm67g8vx", "title": "Link to Invoices", "type": "board-relation"},
+    {"id": "text_mm6xnhdy", "title": "Holidays", "type": "text"},
+]
+
+
+def ensure_user_mappings(db: Session, user_id: int, board_id: Optional[str] = "default", is_invoice: bool = False, is_product: bool = False, is_customer: bool = False) -> List[FieldMapping]:
     """Ensures a user has active field mappings for a specific board, seeding defaults if empty."""
     if not db:
         return []
 
-    target_board_id = board_id or ("5101138242" if is_invoice else ("default_product" if is_product else "default"))
+    target_board_id = board_id or ("5101138242" if is_invoice else ("5101138235" if is_product else ("5101138223" if is_customer else "default")))
     mappings = (
         db.query(FieldMapping)
         .filter(FieldMapping.user_id == user_id, FieldMapping.board_id == target_board_id)
@@ -187,6 +303,8 @@ def ensure_user_mappings(db: Session, user_id: int, board_id: Optional[str] = "d
             defaults = DEFAULT_INVOICE_MAPPINGS
         elif is_product:
             defaults = DEFAULT_PRODUCT_MAPPINGS
+        elif is_customer or target_board_id in ("5101138223", "default_customer"):
+            defaults = DEFAULT_CUSTOMER_MAPPINGS
         else:
             defaults = DEFAULT_MAPPINGS
             
@@ -247,7 +365,7 @@ async def mappings_page(
         if monday_cred and monday_cred.board_id:
             board_id_1 = monday_cred.board_id
         else:
-            board_id_1 = "default"
+            board_id_1 = "5101138223"
 
     if not board_id_2:
         # Try to find existing mapping for Invoice to recover board_id_2
@@ -273,7 +391,7 @@ async def mappings_page(
             logger.warning("Could not fetch boards from Monday: %s", e)
 
     # Ensure mappings exist for all boards
-    ensure_user_mappings(db, user_id, board_id_1, is_invoice=False)
+    ensure_user_mappings(db, user_id, board_id_1, is_customer=True)
     ensure_user_mappings(db, user_id, board_id_2, is_invoice=True)
     ensure_user_mappings(db, user_id, board_id_3, is_product=True)
     
@@ -285,22 +403,38 @@ async def mappings_page(
     # Construct the reversed rows for UI representation
     # Xero target path is the Source, and Monday board columns are the Targets.
     rows = []
-    for item in DEFAULT_MAPPINGS:
+    seen_xero_paths = set()
+    base_mappings_1 = DEFAULT_CUSTOMER_MAPPINGS if board_id_1 in ("5101138223", "default", "default_customer") else DEFAULT_CUSTOMER_MAPPINGS
+    for item in base_mappings_1:
         xero_path = item["target_xero_path"]
+        seen_xero_paths.add(xero_path)
         m1 = next((m for m in mappings_b1 if m.target_xero_path == xero_path), None)
+        col_val = m1.source_column if m1 else item["source_column"]
         rows.append({
             "target_xero_path": xero_path,
-            "board_1_col": m1.source_column if m1 else item["source_column"],
+            "board_1_col": col_val,
+            "board_1_col_title": get_column_title(col_val),
             "custom_override_path": m1.custom_override_path if m1 else item.get("custom_override_path", ""),
         })
+    for m in mappings_b1:
+        if m.target_xero_path not in seen_xero_paths:
+            seen_xero_paths.add(m.target_xero_path)
+            rows.append({
+                "target_xero_path": m.target_xero_path,
+                "board_1_col": m.source_column,
+                "board_1_col_title": get_column_title(m.source_column),
+                "custom_override_path": m.custom_override_path or "",
+            })
 
     rows_b2 = []
     for item in DEFAULT_INVOICE_MAPPINGS:
         xero_path = item["target_xero_path"]
         m2 = next((m for m in mappings_b2 if m.target_xero_path == xero_path), None)
+        col_val = m2.source_column if m2 else item["source_column"]
         rows_b2.append({
             "target_xero_path": xero_path,
-            "board_2_col": m2.source_column if m2 else item["source_column"],
+            "board_2_col": col_val,
+            "board_2_col_title": get_column_title(col_val),
             "custom_override_path": m2.custom_override_path if m2 else item.get("custom_override_path", ""),
         })
 
@@ -308,9 +442,11 @@ async def mappings_page(
     for item in DEFAULT_PRODUCT_MAPPINGS:
         xero_path = item["target_xero_path"]
         m3 = next((m for m in mappings_b3 if m.target_xero_path == xero_path), None)
+        col_val = m3.source_column if m3 else item["source_column"]
         rows_b3.append({
             "target_xero_path": xero_path,
-            "board_3_col": m3.source_column if m3 else item["source_column"],
+            "board_3_col": col_val,
+            "board_3_col_title": get_column_title(col_val),
             "custom_override_path": m3.custom_override_path if m3 else item.get("custom_override_path", ""),
         })
 
@@ -483,7 +619,8 @@ async def reset_mappings_to_default(
             ).delete(synchronize_session=False)
             
             # Seed default mappings for Board 1
-            for item in DEFAULT_MAPPINGS:
+            defaults_1 = DEFAULT_CUSTOMER_MAPPINGS if board_id_1 in ("5101138223", "default", "default_customer") else DEFAULT_CUSTOMER_MAPPINGS
+            for item in defaults_1:
                 fm = FieldMapping(
                     user_id=user_id,
                     source_column=item["source_column"],
@@ -708,19 +845,20 @@ async def get_board_columns(
     if not columns:
         if board_id == "5101138235":
             columns = [
-                {"id": "item_name", "title": "item_name", "type": "text"},
-                {"id": "item_number", "title": "item_number", "type": "text"},
-                {"id": "description", "title": "description", "type": "text"},
-                {"id": "cost_price", "title": "cost_price", "type": "numeric"},
-                {"id": "selling_price", "title": "selling_price", "type": "numeric"},
+                {"id": "item_name", "title": "Item Name", "type": "text"},
+                {"id": "item_number", "title": "Item Code", "type": "text"},
+                {"id": "description", "title": "Description", "type": "text"},
+                {"id": "cost_price", "title": "Cost Price", "type": "numeric"},
+                {"id": "selling_price", "title": "Selling Price", "type": "numeric"},
             ]
         elif board_id in ("5101138242", "default_invoice"):
             columns = [
-                {"id": "name", "title": "name", "type": "text"},
-                {"id": "date4", "title": "date4", "type": "date"},
-                {"id": "numeric_mm66h8ce", "title": "numeric_mm66h8ce", "type": "numeric"},
-                {"id": "text_mm66zpe0", "title": "text_mm66zpe0", "type": "text"},
-                {"id": "board_relation_mm67qge0", "title": "board_relation_mm67qge0", "type": "board_relation"},
+                {"id": "name", "title": "Invoice Number", "type": "text"},
+                {"id": "status", "title": "Status", "type": "text"},
+                {"id": "date4", "title": "Invoice Date", "type": "date"},
+                {"id": "numeric_mm66h8ce", "title": "Invoice Total", "type": "numeric"},
+                {"id": "text_mm66zpe0", "title": "Delivery Address", "type": "text"},
+                {"id": "board_relation_mm67qge0", "title": "Contact", "type": "board_relation"},
                 # Subitem columns fallback
                 {"id": "board_relation_mm6jp0r9", "title": "Products (Subitem)", "type": "board_relation"},
                 {"id": "numeric_mm66tnmw", "title": "Quantity (Subitem)", "type": "numeric"},
@@ -728,16 +866,11 @@ async def get_board_columns(
                 {"id": "lookup_mm6j8ck6", "title": "Description (Subitem)", "type": "text"},
             ]
         else:
-            columns = [
-                {"id": "transaction_id", "title": "transaction_id", "type": "text"},
-                {"id": "company_name", "title": "company_name", "type": "text"},
-                {"id": "customer_first_name", "title": "customer_first_name", "type": "text"},
-                {"id": "customer_last_name", "title": "customer_last_name", "type": "text"},
-                {"id": "email_address", "title": "email_address", "type": "text"},
-                {"id": "item_description", "title": "item_description", "type": "text"},
-                {"id": "quantity", "title": "quantity", "type": "numeric"},
-                {"id": "unit_price", "title": "unit_price", "type": "numeric"},
-            ]
+            columns = [dict(c) for c in DEFAULT_CUSTOMER_COLUMNS]
+
+    for col in columns:
+        if not col.get("title") or col.get("title") == col.get("id"):
+            col["title"] = get_column_title(col.get("id", ""))
         
     return {"columns": columns}
 
@@ -805,19 +938,20 @@ async def get_board_mapping_details(
     if not columns:
         if board_id == "5101138235":
             columns = [
-                {"id": "item_name", "title": "item_name", "type": "text"},
-                {"id": "item_number", "title": "item_number", "type": "text"},
-                {"id": "description", "title": "description", "type": "text"},
-                {"id": "cost_price", "title": "cost_price", "type": "numeric"},
-                {"id": "selling_price", "title": "selling_price", "type": "numeric"},
+                {"id": "item_name", "title": "Item Name", "type": "text"},
+                {"id": "item_number", "title": "Item Code", "type": "text"},
+                {"id": "description", "title": "Description", "type": "text"},
+                {"id": "cost_price", "title": "Cost Price", "type": "numeric"},
+                {"id": "selling_price", "title": "Selling Price", "type": "numeric"},
             ]
         elif board_id in ("5101138242", "default_invoice"):
             columns = [
-                {"id": "name", "title": "name", "type": "text"},
-                {"id": "date4", "title": "date4", "type": "date"},
-                {"id": "numeric_mm66h8ce", "title": "numeric_mm66h8ce", "type": "numeric"},
-                {"id": "text_mm66zpe0", "title": "text_mm66zpe0", "type": "text"},
-                {"id": "board_relation_mm67qge0", "title": "board_relation_mm67qge0", "type": "board_relation"},
+                {"id": "name", "title": "Invoice Number", "type": "text"},
+                {"id": "status", "title": "Status", "type": "text"},
+                {"id": "date4", "title": "Invoice Date", "type": "date"},
+                {"id": "numeric_mm66h8ce", "title": "Invoice Total", "type": "numeric"},
+                {"id": "text_mm66zpe0", "title": "Delivery Address", "type": "text"},
+                {"id": "board_relation_mm67qge0", "title": "Contact", "type": "board_relation"},
                 # Subitem columns fallback
                 {"id": "board_relation_mm6jp0r9", "title": "Products (Subitem)", "type": "board_relation"},
                 {"id": "numeric_mm66tnmw", "title": "Quantity (Subitem)", "type": "numeric"},
@@ -825,16 +959,11 @@ async def get_board_mapping_details(
                 {"id": "lookup_mm6j8ck6", "title": "Description (Subitem)", "type": "text"},
             ]
         else:
-            columns = [
-                {"id": "transaction_id", "title": "transaction_id", "type": "text"},
-                {"id": "company_name", "title": "company_name", "type": "text"},
-                {"id": "customer_first_name", "title": "customer_first_name", "type": "text"},
-                {"id": "customer_last_name", "title": "customer_last_name", "type": "text"},
-                {"id": "email_address", "title": "email_address", "type": "text"},
-                {"id": "item_description", "title": "item_description", "type": "text"},
-                {"id": "quantity", "title": "quantity", "type": "numeric"},
-                {"id": "unit_price", "title": "unit_price", "type": "numeric"},
-            ]
+            columns = [dict(c) for c in DEFAULT_CUSTOMER_COLUMNS]
+
+    for col in columns:
+        if not col.get("title") or col.get("title") == col.get("id"):
+            col["title"] = get_column_title(col.get("id", ""))
         
     # Convert saved mappings to list of dicts
     mappings_list = []
@@ -862,7 +991,7 @@ async def get_board_mapping_details(
                     "custom_override_path": item.get("custom_override_path", ""),
                 })
         else:
-            for item in DEFAULT_MAPPINGS:
+            for item in DEFAULT_CUSTOMER_MAPPINGS:
                 mappings_list.append({
                     "target_xero_path": item["target_xero_path"],
                     "source_column": item["source_column"],

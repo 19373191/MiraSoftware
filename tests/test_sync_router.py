@@ -131,6 +131,58 @@ class TestSyncRouter(unittest.TestCase):
             self.assertEqual(new_logs[0].payload_count, 3)
             self.assertEqual(new_logs[0].direction, "xero_to_monday")
 
+    @patch("routes.sync.get_user_credentials")
+    def test_run_spa_sync_with_custom_since_date(self, mock_get_creds):
+        """Verifies that providing a custom since_date filters records created on or after that date."""
+        mock_get_creds.return_value = MagicMock(access_token="mock_token", board_id="default")
+        from routes.sync import run_spa_sync_in_background, SPA_LOGS
+        
+        with patch("models.db.SessionLocal", return_value=self.db), \
+             patch.dict("os.environ", {"XERO_DRY_RUN": "True"}):
+            
+            # Use past date: 2020-01-01 -> all simulated records are after 2020-01-01
+            run_spa_sync_in_background(
+                direction="xero_to_monday",
+                board_id_1="default",
+                board_id_3="5101138235",
+                batch_count=100,
+                group_by_company=True,
+                target_account="200",
+                user_id=1,
+                since_date="2020-01-01"
+            )
+            
+            logs_text = [log["message"] for log in SPA_LOGS]
+            self.assertTrue(any("User Specified Date Filter" in msg for msg in logs_text))
+            
+            retrieved_log = next(msg for msg in logs_text if "Retrieved" in msg and "contacts" in msg)
+            self.assertIn("5 contacts", retrieved_log)
+
+    @patch("routes.sync.get_user_credentials")
+    def test_run_spa_sync_with_future_since_date(self, mock_get_creds):
+        """Verifies that a future since_date filters out all records."""
+        mock_get_creds.return_value = MagicMock(access_token="mock_token", board_id="default")
+        from routes.sync import run_spa_sync_in_background, SPA_LOGS
+        
+        with patch("models.db.SessionLocal", return_value=self.db), \
+             patch.dict("os.environ", {"XERO_DRY_RUN": "True"}):
+            
+            # Future date: 2099-01-01 -> no simulated records should match
+            run_spa_sync_in_background(
+                direction="xero_to_monday",
+                board_id_1="default",
+                board_id_3="5101138235",
+                batch_count=100,
+                group_by_company=True,
+                target_account="200",
+                user_id=1,
+                since_date="2099-01-01"
+            )
+            
+            logs_text = [log["message"] for log in SPA_LOGS]
+            retrieved_log = next(msg for msg in logs_text if "Retrieved" in msg and "contacts" in msg)
+            self.assertIn("0 contacts", retrieved_log)
+
 
 if __name__ == "__main__":
     unittest.main()

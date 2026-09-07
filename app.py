@@ -469,7 +469,7 @@ def mappings_page():
             if monday_cred and monday_cred.board_id:
                 board_id_1 = monday_cred.board_id
             else:
-                board_id_1 = "default"
+                board_id_1 = "5101138223"
 
         if not board_id_2:
             # Try to recover board_id_2 from existing mappings
@@ -495,8 +495,16 @@ def mappings_page():
             except Exception as e:
                 logger.warning("Could not fetch boards from Monday in app.py: %s", e)
 
-        from routes.mappings import ensure_user_mappings, DEFAULT_MAPPINGS, DEFAULT_INVOICE_MAPPINGS, DEFAULT_PRODUCT_MAPPINGS, DEFAULT_MAPPING_VERSION
-        ensure_user_mappings(db, user_id, board_id_1, is_invoice=False)
+        from routes.mappings import (
+            ensure_user_mappings,
+            DEFAULT_CUSTOMER_MAPPINGS,
+            DEFAULT_MAPPINGS,
+            DEFAULT_INVOICE_MAPPINGS,
+            DEFAULT_PRODUCT_MAPPINGS,
+            DEFAULT_MAPPING_VERSION,
+            get_column_title,
+        )
+        ensure_user_mappings(db, user_id, board_id_1, is_customer=True)
         ensure_user_mappings(db, user_id, board_id_2, is_invoice=True)
         ensure_user_mappings(db, user_id, board_id_3, is_product=True)
 
@@ -507,22 +515,38 @@ def mappings_page():
 
         # Construct the reversed rows for UI representation
         rows = []
-        for item in DEFAULT_MAPPINGS:
+        seen_xero_paths = set()
+        base_mappings_1 = DEFAULT_CUSTOMER_MAPPINGS if board_id_1 in ("5101138223", "default", "default_customer") else DEFAULT_CUSTOMER_MAPPINGS
+        for item in base_mappings_1:
             xero_path = item["target_xero_path"]
+            seen_xero_paths.add(xero_path)
             m1 = next((m for m in mappings_b1 if m.target_xero_path == xero_path), None)
+            col_val = m1.source_column if m1 else item["source_column"]
             rows.append({
                 "target_xero_path": xero_path,
-                "board_1_col": m1.source_column if m1 else item["source_column"],
+                "board_1_col": col_val,
+                "board_1_col_title": get_column_title(col_val),
                 "custom_override_path": m1.custom_override_path if m1 else item.get("custom_override_path", ""),
             })
+        for m in mappings_b1:
+            if m.target_xero_path not in seen_xero_paths:
+                seen_xero_paths.add(m.target_xero_path)
+                rows.append({
+                    "target_xero_path": m.target_xero_path,
+                    "board_1_col": m.source_column,
+                    "board_1_col_title": get_column_title(m.source_column),
+                    "custom_override_path": m.custom_override_path or "",
+                })
 
         rows_b2 = []
         for item in DEFAULT_INVOICE_MAPPINGS:
             xero_path = item["target_xero_path"]
             m2 = next((m for m in mappings_b2 if m.target_xero_path == xero_path), None)
+            col_val = m2.source_column if m2 else item["source_column"]
             rows_b2.append({
                 "target_xero_path": xero_path,
-                "board_2_col": m2.source_column if m2 else item["source_column"],
+                "board_2_col": col_val,
+                "board_2_col_title": get_column_title(col_val),
                 "custom_override_path": m2.custom_override_path if m2 else item.get("custom_override_path", ""),
             })
 
@@ -530,9 +554,11 @@ def mappings_page():
         for item in DEFAULT_PRODUCT_MAPPINGS:
             xero_path = item["target_xero_path"]
             m3 = next((m for m in mappings_b3 if m.target_xero_path == xero_path), None)
+            col_val = m3.source_column if m3 else item["source_column"]
             rows_b3.append({
                 "target_xero_path": xero_path,
-                "board_3_col": m3.source_column if m3 else item["source_column"],
+                "board_3_col": col_val,
+                "board_3_col_title": get_column_title(col_val),
                 "custom_override_path": m3.custom_override_path if m3 else item.get("custom_override_path", ""),
             })
 
@@ -689,7 +715,7 @@ def reset_mappings():
     db = get_db_session()
     try:
         if db:
-            from routes.mappings import DEFAULT_MAPPINGS, DEFAULT_INVOICE_MAPPINGS, DEFAULT_PRODUCT_MAPPINGS, DEFAULT_MAPPING_VERSION
+            from routes.mappings import DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_MAPPINGS, DEFAULT_INVOICE_MAPPINGS, DEFAULT_PRODUCT_MAPPINGS, DEFAULT_MAPPING_VERSION
             
             if reset_target in ("both", "1", "all"):
                 db.query(FieldMapping).filter(
@@ -697,7 +723,8 @@ def reset_mappings():
                     FieldMapping.board_id == board_id_1
                 ).delete(synchronize_session=False)
                 
-                for item in DEFAULT_MAPPINGS:
+                defaults_1 = DEFAULT_CUSTOMER_MAPPINGS if board_id_1 in ("5101138223", "default", "default_customer") else DEFAULT_CUSTOMER_MAPPINGS
+                for item in defaults_1:
                     fm = FieldMapping(
                         user_id=user_id,
                         source_column=item["source_column"],
@@ -1679,6 +1706,7 @@ def flask_get_board_columns(board_id):
     db = get_db_session()
     
     from connectors.monday_connector import MondayConnector
+    from routes.mappings import get_column_title
     
     try:
         monday_cred = db.query(Credentials).filter(Credentials.user_id == user_id, Credentials.platform_name == "monday").first() if db else None
@@ -1687,29 +1715,60 @@ def flask_get_board_columns(board_id):
             try:
                 connector = MondayConnector(api_key=monday_cred.api_key)
                 columns = connector.query_board_columns(board_id)
+                # Check for subtasks column to fetch subitem board columns
+                subitem_board_id = None
+                for col in columns:
+                    if col.get("type") == "subtasks" and col.get("settings_str"):
+                        try:
+                            settings = json.loads(col["settings_str"])
+                            board_ids = settings.get("boardIds")
+                            if board_ids and isinstance(board_ids, list):
+                                subitem_board_id = str(board_ids[0])
+                                break
+                        except Exception as e:
+                            logger.warning("Could not parse subtasks settings_str: %s", e)
+                if subitem_board_id:
+                    try:
+                        sub_columns = connector.query_board_columns(subitem_board_id)
+                        for scol in sub_columns:
+                            scol["title"] = f"{scol['title']} (Subitem)"
+                            columns.append(scol)
+                    except Exception as e:
+                        logger.warning("Could not query subitem board columns for board %s: %s", subitem_board_id, e)
             except Exception as e:
                 logger.warning("Could not query board columns for board %s: %s", board_id, e)
                 
         if not columns:
             if board_id == "5101138235":
                 columns = [
-                    {"id": "item_name", "title": "item_name", "type": "text"},
-                    {"id": "item_number", "title": "item_number", "type": "text"},
-                    {"id": "description", "title": "description", "type": "text"},
-                    {"id": "cost_price", "title": "cost_price", "type": "numeric"},
-                    {"id": "selling_price", "title": "selling_price", "type": "numeric"},
+                    {"id": "item_name", "title": "Item Name", "type": "text"},
+                    {"id": "item_number", "title": "Item Code", "type": "text"},
+                    {"id": "description", "title": "Description", "type": "text"},
+                    {"id": "cost_price", "title": "Cost Price", "type": "numeric"},
+                    {"id": "selling_price", "title": "Selling Price", "type": "numeric"},
+                ]
+            elif board_id in ("5101138242", "default_invoice"):
+                columns = [
+                    {"id": "name", "title": "Invoice Number", "type": "text"},
+                    {"id": "status", "title": "Status", "type": "text"},
+                    {"id": "date4", "title": "Invoice Date", "type": "date"},
+                    {"id": "numeric_mm66h8ce", "title": "Invoice Total", "type": "numeric"},
+                    {"id": "text_mm66zpe0", "title": "Delivery Address", "type": "text"},
+                    {"id": "board_relation_mm67qge0", "title": "Contact", "type": "board_relation"},
+                    # Subitem columns fallback
+                    {"id": "board_relation_mm6jp0r9", "title": "Products (Subitem)", "type": "board_relation"},
+                    {"id": "numeric_mm66tnmw", "title": "Quantity (Subitem)", "type": "numeric"},
+                    {"id": "numeric_mm662hn4", "title": "Amount (Subitem)", "type": "numeric"},
+                    {"id": "lookup_mm6j8ck6", "title": "Description (Subitem)", "type": "text"},
                 ]
             else:
-                columns = [
-                    {"id": "transaction_id", "title": "transaction_id", "type": "text"},
-                    {"id": "company_name", "title": "company_name", "type": "text"},
-                    {"id": "customer_first_name", "title": "customer_first_name", "type": "text"},
-                    {"id": "customer_last_name", "title": "customer_last_name", "type": "text"},
-                    {"id": "email_address", "title": "email_address", "type": "text"},
-                    {"id": "item_description", "title": "item_description", "type": "text"},
-                    {"id": "quantity", "title": "quantity", "type": "numeric"},
-                    {"id": "unit_price", "title": "unit_price", "type": "numeric"},
-                ]
+                from routes.mappings import DEFAULT_CUSTOMER_COLUMNS
+                columns = [dict(c) for c in DEFAULT_CUSTOMER_COLUMNS]
+
+        for col in columns:
+            if not col.get("title") or col.get("title") == col.get("id"):
+                col["title"] = get_column_title(col.get("id", ""))
+
         return jsonify({"columns": columns})
     finally:
         if db and hasattr(db, "close"):
@@ -1726,6 +1785,7 @@ def flask_get_board_details(board_id):
     db = get_db_session()
     
     from connectors.monday_connector import MondayConnector
+    from routes.mappings import get_column_title
     
     try:
         monday_cred = db.query(Credentials).filter(Credentials.user_id == user_id, Credentials.platform_name == "monday").first() if db else None
@@ -1734,29 +1794,59 @@ def flask_get_board_details(board_id):
             try:
                 connector = MondayConnector(api_key=monday_cred.api_key)
                 columns = connector.query_board_columns(board_id)
+                # Check for subtasks column to fetch subitem board columns
+                subitem_board_id = None
+                for col in columns:
+                    if col.get("type") == "subtasks" and col.get("settings_str"):
+                        try:
+                            settings = json.loads(col["settings_str"])
+                            board_ids = settings.get("boardIds")
+                            if board_ids and isinstance(board_ids, list):
+                                subitem_board_id = str(board_ids[0])
+                                break
+                        except Exception as e:
+                            logger.warning("Could not parse subtasks settings_str: %s", e)
+                if subitem_board_id:
+                    try:
+                        sub_columns = connector.query_board_columns(subitem_board_id)
+                        for scol in sub_columns:
+                            scol["title"] = f"{scol['title']} (Subitem)"
+                            columns.append(scol)
+                    except Exception as e:
+                        logger.warning("Could not query subitem board columns for board %s: %s", subitem_board_id, e)
             except Exception as e:
                 logger.warning("Could not query board columns for board %s: %s", board_id, e)
                 
         if not columns:
             if board_id == "5101138235":
                 columns = [
-                    {"id": "item_name", "title": "item_name", "type": "text"},
-                    {"id": "item_number", "title": "item_number", "type": "text"},
-                    {"id": "description", "title": "description", "type": "text"},
-                    {"id": "cost_price", "title": "cost_price", "type": "numeric"},
-                    {"id": "selling_price", "title": "selling_price", "type": "numeric"},
+                    {"id": "item_name", "title": "Item Name", "type": "text"},
+                    {"id": "item_number", "title": "Item Code", "type": "text"},
+                    {"id": "description", "title": "Description", "type": "text"},
+                    {"id": "cost_price", "title": "Cost Price", "type": "numeric"},
+                    {"id": "selling_price", "title": "Selling Price", "type": "numeric"},
+                ]
+            elif board_id in ("5101138242", "default_invoice"):
+                columns = [
+                    {"id": "name", "title": "Invoice Number", "type": "text"},
+                    {"id": "status", "title": "Status", "type": "text"},
+                    {"id": "date4", "title": "Invoice Date", "type": "date"},
+                    {"id": "numeric_mm66h8ce", "title": "Invoice Total", "type": "numeric"},
+                    {"id": "text_mm66zpe0", "title": "Delivery Address", "type": "text"},
+                    {"id": "board_relation_mm67qge0", "title": "Contact", "type": "board_relation"},
+                    # Subitem columns fallback
+                    {"id": "board_relation_mm6jp0r9", "title": "Products (Subitem)", "type": "board_relation"},
+                    {"id": "numeric_mm66tnmw", "title": "Quantity (Subitem)", "type": "numeric"},
+                    {"id": "numeric_mm662hn4", "title": "Amount (Subitem)", "type": "numeric"},
+                    {"id": "lookup_mm6j8ck6", "title": "Description (Subitem)", "type": "text"},
                 ]
             else:
-                columns = [
-                    {"id": "transaction_id", "title": "transaction_id", "type": "text"},
-                    {"id": "company_name", "title": "company_name", "type": "text"},
-                    {"id": "customer_first_name", "title": "customer_first_name", "type": "text"},
-                    {"id": "customer_last_name", "title": "customer_last_name", "type": "text"},
-                    {"id": "email_address", "title": "email_address", "type": "text"},
-                    {"id": "item_description", "title": "item_description", "type": "text"},
-                    {"id": "quantity", "title": "quantity", "type": "numeric"},
-                    {"id": "unit_price", "title": "unit_price", "type": "numeric"},
-                ]
+                from routes.mappings import DEFAULT_CUSTOMER_COLUMNS
+                columns = [dict(c) for c in DEFAULT_CUSTOMER_COLUMNS]
+
+        for col in columns:
+            if not col.get("title") or col.get("title") == col.get("id"):
+                col["title"] = get_column_title(col.get("id", ""))
             
         saved_mappings = []
         if db:
@@ -1782,9 +1872,17 @@ def flask_get_board_details(board_id):
                         "source_column": item["source_column"],
                         "custom_override_path": item.get("custom_override_path", ""),
                     })
+            elif board_id in ("5101138242", "default_invoice"):
+                from routes.mappings import DEFAULT_INVOICE_MAPPINGS
+                for item in DEFAULT_INVOICE_MAPPINGS:
+                    mappings_list.append({
+                        "target_xero_path": item["target_xero_path"],
+                        "source_column": item["source_column"],
+                        "custom_override_path": item.get("custom_override_path", ""),
+                    })
             else:
-                from routes.mappings import DEFAULT_MAPPINGS
-                for item in DEFAULT_MAPPINGS:
+                from routes.mappings import DEFAULT_CUSTOMER_MAPPINGS
+                for item in DEFAULT_CUSTOMER_MAPPINGS:
                     mappings_list.append({
                         "target_xero_path": item["target_xero_path"],
                         "source_column": item["source_column"],

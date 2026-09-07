@@ -66,6 +66,13 @@
                 </div>
 
                 <div>
+                    <label for="input-sync-date" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Created / Updated On or After</label>
+                    <input type="date" id="input-sync-date"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-indigo-600 bg-white">
+                    <span class="text-[10px] text-slate-400">Optional: leave empty to sync all or from last sync</span>
+                </div>
+
+                <div>
                     <label for="input-batch-count" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Batch Limit</label>
                     <input type="number" id="input-batch-count" value="100" min="1" max="5000"
                         class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-indigo-600">
@@ -211,6 +218,7 @@ function startLiveSync() {
     const board3 = document.getElementById("board_id_3").value;
     const mode = document.getElementById("select-mode").value;
     const account = document.getElementById("select-account").value;
+    const sinceDate = document.getElementById("input-sync-date") ? document.getElementById("input-sync-date").value : "";
 
     btn.disabled = true;
     btn.classList.add("opacity-50", "cursor-not-allowed");
@@ -222,6 +230,9 @@ function startLiveSync() {
     progressPercent.textContent = "5%";
 
     let url = `/api/sync/stream?direction=${direction}&batch_count=${count}`;
+    if (sinceDate) {
+        url += `&since_date=${encodeURIComponent(sinceDate)}`;
+    }
     if (direction === "xero_to_monday") {
         url += `&board_id_1=${encodeURIComponent(board1)}&board_id_3=${encodeURIComponent(board3)}`;
     } else {

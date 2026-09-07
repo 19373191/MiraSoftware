@@ -86,12 +86,14 @@ btnSync.addEventListener("click", () => {
 
     appendLocalLog("[System] Triggering asynchronous sync pipeline...", "info");
 
+    const syncDateElem = document.getElementById("input-sync-date");
     const payload = {
         direction: document.getElementById("select-direction").value,
         board_id_1: document.getElementById("board-id-1").value,
         batch_count: parseInt(document.getElementById("input-batch-count").value) || 100,
         group_by_company: document.getElementById("select-mode").value === "true",
-        target_account: document.getElementById("select-account").value
+        target_account: document.getElementById("select-account").value,
+        since_date: syncDateElem && syncDateElem.value ? syncDateElem.value : null
     };
 
     // Clear logs first
@@ -395,9 +397,13 @@ window.addNewFieldRow = function() {
     div.setAttribute("data-target-2", "");
     div.setAttribute("data-target-3", "");
     
+    const colTitle = formatColTitle(cleanName);
     div.innerHTML = `
         <div class="col-span-5 flex flex-col pr-3">
-            <span class="text-xs font-bold text-slate-800 property-name">${cleanName}</span>
+            <div class="flex items-center space-x-1.5 flex-wrap">
+                <span class="text-xs font-bold text-slate-800 column-title">${escapeHtml(colTitle)}</span>
+                <span class="text-[10px] font-mono text-slate-400 font-normal property-name">(${escapeHtml(cleanName)})</span>
+            </div>
             <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Custom (monday target)</span>
         </div>
         <div class="col-span-7 flex items-center justify-between">
@@ -548,6 +554,47 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
+const KNOWN_COL_TITLES = {
+    "name": "Name",
+    "text_mm663vnh": "Account Number",
+    "text_mm66sr6t": "First Name",
+    "text_mm668mv4": "Last Name",
+    "status": "Status",
+    "date4": "Date",
+    "text_mm66cg69": "Phone",
+    "email_mm5w89d8": "Email",
+    "text_mm5wwdh": "Address",
+    "text_mm66zhdw": "Xero ID",
+    "board_relation_mm67g8vx": "Link to Invoices",
+    "text_mm6xnhdy": "Holidays",
+    "numeric_mm6631e9": "Invoice Total",
+    "numeric_mm66h8ce": "Invoice Total",
+    "delivery_address": "Delivery Address",
+    "text_mm66zpe0": "Delivery Address",
+    "board_relation_mm67qge0": "Contact",
+    "board_relation_mm6jp0r9": "Products (Subitem)",
+    "numeric_mm66tnmw": "Quantity (Subitem)",
+    "numeric_mm662hn4": "Unit Amount (Subitem)",
+    "lookup_mm6j8ck6": "Description (Subitem)",
+    "item_name": "Item Name",
+    "item_number": "Item Code",
+    "description": "Description",
+    "cost_price": "Cost Price",
+    "selling_price": "Selling Price"
+};
+
+function formatColTitle(id, rawTitle) {
+    if (rawTitle && rawTitle.trim() && rawTitle.trim() !== id) {
+        return rawTitle.trim();
+    }
+    if (id && KNOWN_COL_TITLES[id]) {
+        return KNOWN_COL_TITLES[id];
+    }
+    return id
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+}
+
 window.loadMondayBoardColumns = function(boardId) {
     if (!boardId) return;
     
@@ -565,6 +612,7 @@ window.loadMondayBoardColumns = function(boardId) {
                 const existing = currentMappings.find(m => m.source_column === col.id);
                 const mappedPath = existing ? existing.target_xero_path : "";
                 const overrideVal = existing ? (existing.custom_override_path || "") : "";
+                const colTitle = formatColTitle(col.id, col.title);
                 
                 const div = document.createElement("div");
                 div.className = "target-field-row grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-3.5 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
@@ -576,8 +624,11 @@ window.loadMondayBoardColumns = function(boardId) {
                 
                 div.innerHTML = `
                     <div class="col-span-5 flex flex-col pr-3">
-                        <span class="text-xs font-bold text-slate-800 property-name">${col.id}</span>
-                        <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${typeLabel} (monday target)</span>
+                        <div class="flex items-center space-x-1.5 flex-wrap">
+                            <span class="text-xs font-bold text-slate-800 column-title">${escapeHtml(colTitle)}</span>
+                            <span class="text-[10px] font-mono text-slate-400 font-normal property-name">(${escapeHtml(col.id)})</span>
+                        </div>
+                        <span class="text-[9px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${escapeHtml(typeLabel)} (monday target)</span>
                     </div>
                     <div class="col-span-7 flex items-center justify-between">
                         <div class="dropzone flex-grow min-h-[36px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-3 transition-all"

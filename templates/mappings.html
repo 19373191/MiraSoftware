@@ -70,18 +70,21 @@
             <div class="px-6 py-4 bg-white border-b border-slate-100 flex flex-col space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="flex items-center space-x-2">
-                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Target monday.com Boards Selection</span>
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Target monday.com Customer Boards Selection</span>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 gap-4">
                     <!-- Board ID -->
                     <div class="space-y-1.5">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Board ID</label>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Customer Board ID</label>
                         <div class="flex items-center space-x-2">
                             <select id="board-select-1" onchange="updateBoardField(1, this.value); loadMondayBoardColumns(this.value);" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-indigo-600 bg-white">
-                                <option value="default" {% if board_id_1 == 'default' or not board_id_1 %}selected{% endif %}>default (Default Config Board)</option>
+                                <option value="5101138223" {% if board_id_1 == '5101138223' or not board_id_1 %}selected{% endif %}>5101138223 (Customer Board)</option>
+                                <option value="default" {% if board_id_1 == 'default' %}selected{% endif %}>default (Default Config Board)</option>
                                 {% for b in boards %}
+                                {% if b.id|string != '5101138223' %}
                                 <option value="{{ b.id }}" {% if b.id|string == board_id_1|string %}selected{% endif %}>{{ b.name }} ({{ b.id }})</option>
+                                {% endif %}
                                 {% endfor %}
                             </select>
                         </div>
@@ -104,9 +107,12 @@
                     
                     <!-- Left: Monday column identifier and metadata -->
                     <div class="col-span-5 flex flex-col pr-4">
-                        <span class="text-xs font-bold text-slate-800 property-name">{{ m.board_1_col or 'unnamed_field' }}</span>
+                        <div class="flex items-center space-x-1.5 flex-wrap">
+                            <span class="text-xs font-bold text-slate-800 column-title">{{ m.board_1_col_title or m.board_1_col or 'unnamed_field' }}</span>
+                            <span class="text-[10px] font-mono text-slate-400 font-normal property-name">({{ m.board_1_col or 'unnamed_field' }})</span>
+                        </div>
                         <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">
-                            {% if m.board_1_col in ['quantity', 'unit_price'] %}Number{% elif m.board_1_col == 'email_address' %}Email{% else %}Text{% endif %} (monday target)
+                            {% if m.board_1_col in ['quantity', 'unit_price'] %}Number{% elif 'email' in m.board_1_col %}Email{% elif 'date' in m.board_1_col %}Date{% elif 'relation' in m.board_1_col %}Link to Board{% elif m.board_1_col == 'status' %}Status{% else %}Text{% endif %} (monday target)
                         </span>
                     </div>
 
@@ -186,7 +192,10 @@
                     
                     <!-- Left: Monday column identifier and metadata -->
                     <div class="col-span-5 flex flex-col pr-4">
-                        <span class="text-xs font-bold text-slate-800 property-name-3">{{ m.board_3_col or 'unnamed_field' }}</span>
+                        <div class="flex items-center space-x-1.5 flex-wrap">
+                            <span class="text-xs font-bold text-slate-800 column-title-3">{{ m.board_3_col_title or m.board_3_col or 'unnamed_field' }}</span>
+                            <span class="text-[10px] font-mono text-slate-400 font-normal property-name-3">({{ m.board_3_col or 'unnamed_field' }})</span>
+                        </div>
                         <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">
                             {% if m.board_3_col in ['cost_price', 'selling_price'] %}Number{% else %}Text{% endif %} (monday target)
                         </span>
@@ -273,7 +282,10 @@
                     
                     <!-- Left: Monday column identifier and metadata -->
                     <div class="col-span-5 flex flex-col pr-4">
-                        <span class="text-xs font-bold text-slate-800 property-name-2">{{ m.board_2_col or 'unnamed_field' }}</span>
+                        <div class="flex items-center space-x-1.5 flex-wrap">
+                            <span class="text-xs font-bold text-slate-800 column-title-2">{{ m.board_2_col_title or m.board_2_col or 'unnamed_field' }}</span>
+                            <span class="text-[10px] font-mono text-slate-400 font-normal property-name-2">({{ m.board_2_col or 'unnamed_field' }})</span>
+                        </div>
                         <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">
                             {% if m.board_2_col in ['quantity', 'amount'] %}Number{% else %}Text{% endif %} (monday target)
                         </span>
@@ -338,7 +350,10 @@
                     
                     <!-- Left: Monday column identifier and metadata -->
                     <div class="col-span-5 flex flex-col pr-4">
-                        <span class="text-xs font-bold text-slate-800 property-name-2">{{ m.board_2_col or 'unnamed_field' }}</span>
+                        <div class="flex items-center space-x-1.5 flex-wrap">
+                            <span class="text-xs font-bold text-slate-800 column-title-2">{{ m.board_2_col_title or m.board_2_col or 'unnamed_field' }}</span>
+                            <span class="text-[10px] font-mono text-slate-400 font-normal property-name-2">({{ m.board_2_col or 'unnamed_field' }})</span>
+                        </div>
                         <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">
                             {% if m.board_2_col in ['quantity', 'amount'] %}Number{% else %}Text{% endif %} (monday target)
                         </span>
@@ -666,280 +681,55 @@
     let showUnmappedOnly = false;
     let sidebarOpen = true;
 
-    // Attach row select listeners
-    document.addEventListener("DOMContentLoaded", () => {
-        setupRowSelection();
-        const primaryBoard = document.getElementById("board-select-1");
-        if (primaryBoard && primaryBoard.value) {
-            loadMondayBoardColumns(primaryBoard.value);
+    const KNOWN_COL_TITLES = {
+        "name": "Name",
+        "text_mm663vnh": "Account Number",
+        "text_mm66sr6t": "First Name",
+        "text_mm668mv4": "Last Name",
+        "status": "Status",
+        "date4": "Date",
+        "text_mm66cg69": "Phone",
+        "email_mm5w89d8": "Email",
+        "text_mm5wwdh": "Address",
+        "text_mm66zhdw": "Xero ID",
+        "board_relation_mm67g8vx": "Link to Invoices",
+        "text_mm6xnhdy": "Holidays",
+        "numeric_mm6631e9": "Invoice Total",
+        "numeric_mm66h8ce": "Invoice Total",
+        "delivery_address": "Delivery Address",
+        "text_mm66zpe0": "Delivery Address",
+        "board_relation_mm67qge0": "Contact",
+        "board_relation_mm6jp0r9": "Products (Subitem)",
+        "numeric_mm66tnmw": "Quantity (Subitem)",
+        "numeric_mm662hn4": "Unit Amount (Subitem)",
+        "lookup_mm6j8ck6": "Description (Subitem)",
+        "item_name": "Item Name",
+        "item_number": "Item Code",
+        "description": "Description",
+        "cost_price": "Cost Price",
+        "selling_price": "Selling Price"
+    };
+
+    function formatColTitle(id, rawTitle) {
+        if (rawTitle && rawTitle.trim() && rawTitle.trim() !== id) {
+            return rawTitle.trim();
         }
-        const productBoard = document.getElementById("board-select-3");
-        if (productBoard && productBoard.value) {
-            loadMondayBoard3Columns(productBoard.value);
+        if (id && KNOWN_COL_TITLES[id]) {
+            return KNOWN_COL_TITLES[id];
         }
-    });
-
-    function setupRowSelection() {
-        const rows1 = document.querySelectorAll(".target-field-row");
-        const rows2 = document.querySelectorAll(".target-field-row-2");
-        const rows3 = document.querySelectorAll(".target-field-row-3");
-        const allRows = [...rows1, ...rows2, ...rows3];
-        allRows.forEach(row => {
-            row.addEventListener("click", () => {
-                allRows.forEach(r => r.classList.remove("ring-2", "ring-indigo-600", "bg-indigo-50/10"));
-                row.classList.add("ring-2", "ring-indigo-600", "bg-indigo-55/10");
-                activeTargetRow = row;
-            });
-        });
+        return id
+            .replace(/[_-]+/g, " ")
+            .replace(/\b\w/g, c => c.toUpperCase());
     }
 
-
-    // Toggle schema tree folders
-    function toggleFolder(elem) {
-        const arrow = elem.querySelector("svg");
-        const list = elem.nextElementSibling;
-        if (list.classList.contains("hidden")) {
-            list.classList.remove("hidden");
-            arrow.classList.add("rotate-90");
-        } else {
-            list.classList.add("hidden");
-            arrow.classList.remove("rotate-90");
-        }
-    }
-
-    // Toggle sidebar visibility
-    function toggleSidebar() {
-        const sidebar = document.getElementById("datastream-sidebar");
-        sidebarOpen = !sidebarOpen;
-        if (sidebarOpen) {
-            sidebar.classList.remove("w-0");
-            sidebar.classList.add("w-80");
-        } else {
-            sidebar.classList.remove("w-80");
-            sidebar.classList.add("w-0");
-        }
-    }
-
-    // Update hidden fields when select changes
-    function updateBoardField(index, value) {
-        document.getElementById("hidden-board-1").value = value;
-        document.getElementById("reset-board-1").value = value;
-    }
-
-    // Filter target fields
-    function filterTargets() {
-        const query = document.getElementById("target-search").value.toLowerCase();
-        const rows = document.querySelectorAll(".target-field-row");
-        
-        rows.forEach(row => {
-            const name = row.querySelector(".property-name").textContent.toLowerCase();
-            const badge = row.querySelector(".badge-text");
-            const badgeVal = badge ? badge.textContent.toLowerCase() : "";
-            
-            const matchQuery = name.includes(query) || badgeVal.includes(query);
-            const matchUnmapped = !showUnmappedOnly || !badge;
-            
-            if (matchQuery && matchUnmapped) {
-                row.classList.remove("hidden");
-            } else {
-                row.classList.add("hidden");
-            }
-        });
-    }
-
-    // Filter schema tree elements
-    function filterSchemaTree() {
-        const query = document.getElementById("schema-search").value.toLowerCase();
-        const leafNodes = document.querySelectorAll(".schema-leaf-node");
-        
-        leafNodes.forEach(node => {
-            const text = node.textContent.toLowerCase();
-            if (text.includes(query)) {
-                node.classList.remove("hidden");
-                // Open all parent folders
-                let parent = node.closest("ul");
-                while (parent && parent.id !== "schema-tree-container") {
-                    parent.classList.remove("hidden");
-                    const arrow = parent.previousElementSibling ? parent.previousElementSibling.querySelector("svg") : null;
-                    if (arrow) arrow.classList.add("rotate-90");
-                    parent = parent.parentElement.closest("ul");
-                }
-            } else {
-                node.classList.add("hidden");
-            }
-        });
-    }
-
-    // Toggle displaying unmapped targets only
-    function toggleUnmappedOnly() {
-        showUnmappedOnly = !showUnmappedOnly;
-        const btn = document.getElementById("btn-display-toggle");
-        if (showUnmappedOnly) {
-            btn.innerHTML = `
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>
-                </svg>
-                <span>Display: Unmapped</span>
-            `;
-        } else {
-            btn.innerHTML = `
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                </svg>
-                <span>Display: All</span>
-            `;
-        }
-        filterTargets();
-    }
-
-    // Drag and Drop implementation
-    function handleDragStart(event, path) {
-        event.dataTransfer.setData("text/plain", path);
-        event.dataTransfer.effectAllowed = "copy";
-    }
-
-    function allowDrop(event) {
-        event.preventDefault();
-    }
-
-    function dragEnter(event) {
-        const dz = event.currentTarget;
-        dz.classList.add("border-indigo-500", "bg-indigo-50/20");
-    }
-
-    function dragLeave(event) {
-        const dz = event.currentTarget;
-        dz.classList.remove("border-indigo-500", "bg-indigo-50/20");
-    }
-
-    function handleDrop(event, element) {
-        event.preventDefault();
-        element.classList.remove("border-indigo-500", "bg-indigo-50/20");
-        const path = event.dataTransfer.getData("text/plain");
-        if (path) {
-            assignMapping(element, path);
-        }
-    }
-
-    // Click-to-map binding
-    function selectSourceNode(nodeElem, path) {
-        if (activeTargetRow) {
-            const dz = activeTargetRow.querySelector(".dropzone");
-            assignMapping(dz, path);
-        }
-    }
-
-    function assignMapping(dropzoneElem, path) {
-        dropzoneElem.innerHTML = `
-            <div class="mapping-badge inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-150 text-indigo-700 font-mono text-[11px] font-medium shadow-2xs select-none">
-                <span class="badge-text">${path}</span>
-                <button type="button" onclick="clearMapping(event, this)" class="ml-2 text-indigo-400 hover:text-indigo-600 focus:outline-none">&times;</button>
-            </div>
-        `;
-    }
-
-    function clearMapping(event, btn) {
-        event.stopPropagation();
-        const dropzone = btn.closest(".dropzone");
-        dropzone.innerHTML = `<span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>`;
-    }
-
-    // Auto Match Fields Logic
-    function autoMatchFields() {
-        const rows = document.querySelectorAll(".target-field-row");
-        const sources = [
-            "Invoice.Reference",
-            "Invoice.Contact.Name",
-            "Invoice.Contact.FirstName",
-            "Invoice.Contact.LastName",
-            "Invoice.Contact.EmailAddress",
-            "Invoice.Contact.AccountNumber",
-            "Invoice.Contact.ContactID",
-            "Invoice.Contact.Address",
-            "Invoice.Contact.Phone",
-            "Invoice.LineItems[0].ItemCode",
-            "Invoice.LineItems[0].Description",
-            "Invoice.LineItems[0].Quantity",
-            "Invoice.LineItems[0].UnitAmount",
-            "Invoice.LineItems[0].TaxType"
-        ];
-
-        rows.forEach(row => {
-            const targetName = row.querySelector(".property-name").textContent.trim().toLowerCase();
-            const dz = row.querySelector(".dropzone");
-            
-            // Check if already mapped
-            if (dz.querySelector(".mapping-badge")) return;
-
-            // Simple match logic
-            let matchedSource = null;
-            sources.forEach(src => {
-                const parts = src.split(".");
-                const lastPart = parts[parts.length - 1].toLowerCase();
-                
-                // Exact or substring matches
-                if (targetName === lastPart || 
-                    targetName.replace(/_/g, "") === lastPart || 
-                    (targetName === "transaction_id" && lastPart === "reference") ||
-                    (targetName === "company_name" && lastPart === "name") ||
-                    (targetName === "unit_price" && lastPart === "unitamount") ||
-                    (targetName === "item_description" && lastPart === "description") ||
-                    (targetName.includes("first") && lastPart.includes("first")) ||
-                    (targetName.includes("last") && lastPart.includes("last"))
-                ) {
-                    matchedSource = src;
-                }
-            });
-
-            if (matchedSource) {
-                assignMapping(dz, matchedSource);
-            }
-        });
-    }
-
-    // Add field row dynamically
-    function addNewFieldRow() {
-        const fieldName = prompt("Enter target Monday.com column identifier (e.g. account_ref):");
-        if (!fieldName) return;
-        
-        const cleanName = fieldName.trim().replace(/[^a-zA-Z0-9_]/g, "");
-        if (!cleanName) return;
-
-        const list = document.getElementById("target-fields-list");
-        const div = document.createElement("div");
-        div.className = "target-field-row grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
-        div.setAttribute("data-target-1", cleanName);
-        div.setAttribute("data-target-2", "");
-        div.setAttribute("data-target-3", "");
-        
-        div.innerHTML = `
-            <div class="col-span-5 flex flex-col pr-4">
-                <span class="text-xs font-bold text-slate-800 property-name">${cleanName}</span>
-                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Custom (monday target)</span>
-            </div>
-            <div class="col-span-7 flex items-center justify-between">
-                <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
-                     ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, this)">
-                    <span class="text-[11px] text-slate-400 placeholder-text">Drag field here or click to map...</span>
-                </div>
-                <div class="ml-3 flex items-center space-x-2">
-                    <input type="text" class="override-input w-28 px-2 py-1 rounded border border-slate-200 text-[10px] font-mono focus:outline-indigo-600 bg-white" placeholder="Custom Override" value="">
-                    <button type="button" onclick="removeFieldRow(this)" class="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        `;
-        list.appendChild(div);
-        setupRowSelection();
-    }
-
-    function removeFieldRow(btn) {
-        const row = btn.closest(".target-field-row");
-        if (row) row.remove();
+    function escapeHtml(text) {
+        if (!text) return "";
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     // Attach row select listeners
@@ -1023,11 +813,13 @@
         
         const rows1 = document.querySelectorAll(".target-field-row");
         rows1.forEach(row => {
-            const name = row.querySelector(".property-name").textContent.toLowerCase();
+            const name = (row.querySelector(".property-name")?.textContent || "").toLowerCase();
+            const title = (row.querySelector(".column-title")?.textContent || "").toLowerCase();
+            const targetAttr = (row.getAttribute("data-target-1") || "").toLowerCase();
             const badge = row.querySelector(".badge-text");
             const badgeVal = badge ? badge.textContent.toLowerCase() : "";
             
-            const matchQuery = name.includes(query) || badgeVal.includes(query);
+            const matchQuery = name.includes(query) || title.includes(query) || targetAttr.includes(query) || badgeVal.includes(query);
             const matchUnmapped = !showUnmappedOnly || !badge;
             
             if (matchQuery && matchUnmapped) {
@@ -1039,11 +831,13 @@
 
         const rows2 = document.querySelectorAll(".target-field-row-2");
         rows2.forEach(row => {
-            const name = row.querySelector(".property-name-2").textContent.toLowerCase();
+            const name = (row.querySelector(".property-name-2")?.textContent || "").toLowerCase();
+            const title = (row.querySelector(".column-title-2")?.textContent || "").toLowerCase();
+            const targetAttr = (row.getAttribute("data-target-2-col") || "").toLowerCase();
             const badge = row.querySelector(".badge-text");
             const badgeVal = badge ? badge.textContent.toLowerCase() : "";
             
-            const matchQuery = name.includes(query) || badgeVal.includes(query);
+            const matchQuery = name.includes(query) || title.includes(query) || targetAttr.includes(query) || badgeVal.includes(query);
             const matchUnmapped = !showUnmappedOnly || !badge;
             
             if (matchQuery && matchUnmapped) {
@@ -1055,11 +849,13 @@
 
         const rows3 = document.querySelectorAll(".target-field-row-3");
         rows3.forEach(row => {
-            const name = row.querySelector(".property-name-3").textContent.toLowerCase();
+            const name = (row.querySelector(".property-name-3")?.textContent || "").toLowerCase();
+            const title = (row.querySelector(".column-title-3")?.textContent || "").toLowerCase();
+            const targetAttr = (row.getAttribute("data-target-3-col") || "").toLowerCase();
             const badge = row.querySelector(".badge-text");
             const badgeVal = badge ? badge.textContent.toLowerCase() : "";
             
-            const matchQuery = name.includes(query) || badgeVal.includes(query);
+            const matchQuery = name.includes(query) || title.includes(query) || targetAttr.includes(query) || badgeVal.includes(query);
             const matchUnmapped = !showUnmappedOnly || !badge;
             
             if (matchQuery && matchUnmapped) {
@@ -1199,8 +995,9 @@
             "Item.SalesDetails.UnitPrice"
         ];
 
-        const matchRow = (row, labelClass, valueAttr) => {
-            const targetName = row.querySelector(labelClass).textContent.trim().toLowerCase();
+        const matchRow = (row, labelClass, valueAttr, titleClass) => {
+            const colId = (row.getAttribute(valueAttr) || row.querySelector(labelClass)?.textContent || "").trim().replace(/^\(|\)$/g, "").toLowerCase();
+            const colTitle = (row.querySelector(titleClass)?.textContent || "").trim().toLowerCase();
             const dz = row.querySelector(".dropzone");
             if (dz.querySelector(".mapping-badge")) return;
 
@@ -1208,16 +1005,38 @@
             sources.forEach(src => {
                 const parts = src.split(".");
                 const lastPart = parts[parts.length - 1].toLowerCase();
-                if (targetName === lastPart || 
-                    targetName.replace(/_/g, "") === lastPart || 
-                    (targetName === "transaction_id" && lastPart === "reference") ||
-                    (targetName === "company_name" && lastPart === "name") ||
-                    (targetName === "unit_price" && lastPart === "unitamount") ||
-                    (targetName === "item_description" && lastPart === "description") ||
-                    (targetName === "cost_price" && src === "Item.PurchaseDetails.UnitPrice") ||
-                    (targetName === "selling_price" && src === "Item.SalesDetails.UnitPrice") ||
-                    (targetName.includes("first") && lastPart.includes("first")) ||
-                    (targetName.includes("last") && lastPart.includes("last"))
+                const candidates = [colId, colId.replace(/_/g, ""), colTitle, colTitle.replace(/\s+/g, "")];
+                
+                if (candidates.includes(lastPart) || 
+                    (colId === "transaction_id" && lastPart === "reference") ||
+                    (colTitle.includes("transaction") && lastPart === "reference") ||
+                    (colId === "company_name" && lastPart === "name") ||
+                    (colTitle.includes("company name") && lastPart === "name") ||
+                    (colId === "unit_price" && lastPart === "unitamount") ||
+                    (colTitle.includes("unit price") && lastPart === "unitamount") ||
+                    (colId === "item_description" && lastPart === "description") ||
+                    (colTitle.includes("description") && lastPart === "description") ||
+                    (colId === "cost_price" && src === "Item.PurchaseDetails.UnitPrice") ||
+                    (colTitle.includes("cost") && src === "Item.PurchaseDetails.UnitPrice") ||
+                    (colId === "selling_price" && src === "Item.SalesDetails.UnitPrice") ||
+                    (colTitle.includes("selling") && src === "Item.SalesDetails.UnitPrice") ||
+                    (colId === "text_mm663vnh" && src === "Invoice.Contact.AccountNumber") ||
+                    (colTitle.includes("account number") && src === "Invoice.Contact.AccountNumber") ||
+                    (colId === "text_mm66sr6t" && src === "Invoice.Contact.FirstName") ||
+                    (colId === "text_mm668mv4" && src === "Invoice.Contact.LastName") ||
+                    (colId === "email_mm5w89d8" && src === "Invoice.Contact.EmailAddress") ||
+                    (colTitle.includes("email") && src === "Invoice.Contact.EmailAddress") ||
+                    (colId === "text_mm66cg69" && src === "Invoice.Contact.Phone") ||
+                    (colTitle.includes("phone") && src === "Invoice.Contact.Phone") ||
+                    (colId === "text_mm5wwdh" && src === "Invoice.Contact.Address") ||
+                    (colTitle.includes("address") && src === "Invoice.Contact.Address") ||
+                    (colId === "text_mm66zhdw" && src === "Invoice.Contact.ContactID") ||
+                    (colTitle.includes("xero id") && src === "Invoice.Contact.ContactID") ||
+                    (colId === "name" && src === "Invoice.Contact.Name") ||
+                    (colId.includes("first") && lastPart.includes("first")) ||
+                    (colTitle.includes("first") && lastPart.includes("first")) ||
+                    (colId.includes("last") && lastPart.includes("last")) ||
+                    (colTitle.includes("last") && lastPart.includes("last"))
                 ) {
                     matchedSource = src;
                 }
@@ -1227,11 +1046,10 @@
             }
         };
 
-        rows1.forEach(row => matchRow(row, ".property-name", "data-target-1"));
-        rows2.forEach(row => matchRow(row, ".property-name-2", "data-target-2-col"));
-        rows3.forEach(row => matchRow(row, ".property-name-3", "data-target-3-col"));
+        rows1.forEach(row => matchRow(row, ".property-name", "data-target-1", ".column-title"));
+        rows2.forEach(row => matchRow(row, ".property-name-2", "data-target-2-col", ".column-title-2"));
+        rows3.forEach(row => matchRow(row, ".property-name-3", "data-target-3-col", ".column-title-3"));
     }
-
 
     // Add field row dynamically (Board 1)
     function addNewFieldRow() {
@@ -1246,9 +1064,13 @@
         div.className = "target-field-row grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
         div.setAttribute("data-target-1", cleanName);
         
+        const colTitle = formatColTitle(cleanName);
         div.innerHTML = `
             <div class="col-span-5 flex flex-col pr-4">
-                <span class="text-xs font-bold text-slate-800 property-name">${cleanName}</span>
+                <div class="flex items-center space-x-1.5 flex-wrap">
+                    <span class="text-xs font-bold text-slate-800 column-title">${escapeHtml(colTitle)}</span>
+                    <span class="text-[10px] font-mono text-slate-400 font-normal property-name">(${escapeHtml(cleanName)})</span>
+                </div>
                 <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Custom (monday target)</span>
             </div>
             <div class="col-span-7 flex items-center justify-between">
@@ -1304,9 +1126,13 @@
         div.className = "target-field-row-2 grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
         div.setAttribute("data-target-2-col", cleanName);
         
+        const colTitle = formatColTitle(cleanName);
         div.innerHTML = `
             <div class="col-span-5 flex flex-col pr-4">
-                <span class="text-xs font-bold text-slate-800 property-name-2">${cleanName}</span>
+                <div class="flex items-center space-x-1.5 flex-wrap">
+                    <span class="text-xs font-bold text-slate-800 column-title-2">${escapeHtml(colTitle)}</span>
+                    <span class="text-[10px] font-mono text-slate-400 font-normal property-name-2">(${escapeHtml(cleanName)})</span>
+                </div>
                 <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Custom (monday target)</span>
             </div>
             <div class="col-span-7 flex items-center justify-between">
@@ -1346,9 +1172,13 @@
         div.className = "target-field-row-3 grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
         div.setAttribute("data-target-3-col", cleanName);
         
+        const colTitle = formatColTitle(cleanName);
         div.innerHTML = `
             <div class="col-span-5 flex flex-col pr-4">
-                <span class="text-xs font-bold text-slate-800 property-name-3">${cleanName}</span>
+                <div class="flex items-center space-x-1.5 flex-wrap">
+                    <span class="text-xs font-bold text-slate-800 column-title-3">${escapeHtml(colTitle)}</span>
+                    <span class="text-[10px] font-mono text-slate-400 font-normal property-name-3">(${escapeHtml(cleanName)})</span>
+                </div>
                 <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">Custom (monday target)</span>
             </div>
             <div class="col-span-7 flex items-center justify-between">
@@ -1496,6 +1326,7 @@
                     const existing = currentMappings.find(m => m.source_column === col.id);
                     const mappedPath = existing ? existing.target_xero_path : "";
                     const overrideVal = existing ? (existing.custom_override_path || "") : "";
+                    const colTitle = formatColTitle(col.id, col.title);
                     
                     const div = document.createElement("div");
                     div.className = "target-field-row grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
@@ -1503,8 +1334,11 @@
                     
                     div.innerHTML = `
                         <div class="col-span-5 flex flex-col pr-4">
-                            <span class="text-xs font-bold text-slate-800 property-name">${col.id}</span>
-                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${col.type} (monday target)</span>
+                            <div class="flex items-center space-x-1.5 flex-wrap">
+                                <span class="text-xs font-bold text-slate-800 column-title">${escapeHtml(colTitle)}</span>
+                                <span class="text-[10px] font-mono text-slate-400 font-normal property-name">(${escapeHtml(col.id)})</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${escapeHtml(col.type || "text")} (monday target)</span>
                         </div>
                         <div class="col-span-7 flex items-center justify-between">
                             <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
@@ -1555,6 +1389,7 @@
                     const existing = currentMappings.find(m => m.source_column === col.id);
                     const mappedPath = existing ? existing.target_xero_path : "";
                     const overrideVal = existing ? (existing.custom_override_path || "") : "";
+                    const colTitle = formatColTitle(col.id, col.title);
                     
                     const isSubitem = (col.title && col.title.includes("(Subitem)")) || (mappedPath && mappedPath.includes("LineItems"));
                     const targetList = isSubitem ? listSubitem : listHeader;
@@ -1565,8 +1400,11 @@
                     
                     div.innerHTML = `
                         <div class="col-span-5 flex flex-col pr-4">
-                            <span class="text-xs font-bold text-slate-800 property-name-2">${col.id}</span>
-                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${col.type} (monday target)</span>
+                            <div class="flex items-center space-x-1.5 flex-wrap">
+                                <span class="text-xs font-bold text-slate-800 column-title-2">${escapeHtml(colTitle)}</span>
+                                <span class="text-[10px] font-mono text-slate-400 font-normal property-name-2">(${escapeHtml(col.id)})</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${escapeHtml(col.type || "text")} (monday target)</span>
                         </div>
                         <div class="col-span-7 flex items-center justify-between">
                             <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"
@@ -1615,6 +1453,7 @@
                     const existing = currentMappings.find(m => m.source_column === col.id);
                     const mappedPath = existing ? existing.target_xero_path : "";
                     const overrideVal = existing ? (existing.custom_override_path || "") : "";
+                    const colTitle = formatColTitle(col.id, col.title);
                     
                     const div = document.createElement("div");
                     div.className = "target-field-row-3 grid grid-cols-12 bg-white rounded-xl border border-slate-200/80 p-4 items-center hover:shadow-xs transition-all duration-150 group cursor-pointer";
@@ -1622,8 +1461,11 @@
                     
                     div.innerHTML = `
                         <div class="col-span-5 flex flex-col pr-4">
-                            <span class="text-xs font-bold text-slate-800 property-name-3">${col.id}</span>
-                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${col.type} (monday target)</span>
+                            <div class="flex items-center space-x-1.5 flex-wrap">
+                                <span class="text-xs font-bold text-slate-800 column-title-3">${escapeHtml(colTitle)}</span>
+                                <span class="text-[10px] font-mono text-slate-400 font-normal property-name-3">(${escapeHtml(col.id)})</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-0.5">${escapeHtml(col.type || "text")} (monday target)</span>
                         </div>
                         <div class="col-span-7 flex items-center justify-between">
                             <div class="dropzone flex-grow min-h-[38px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 flex items-center px-4 transition-all"

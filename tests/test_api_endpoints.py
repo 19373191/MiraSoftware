@@ -76,11 +76,21 @@ class TestFastAPIEndpoints(unittest.TestCase):
             "board_id_1": "default",
             "batch_count": 10,
             "group_by_company": True,
-            "target_account": "200"
+            "target_account": "200",
+            "since_date": "2026-09-01"
         }
         run_res = self.client.post("/api/run-sync", json=sync_payload, headers=self.headers)
         self.assertEqual(run_res.status_code, 202)
         self.assertEqual(run_res.json()["status"], "success")
+
+    def test_sync_stream_with_since_date(self):
+        """Verify the SSE sync stream endpoint accepts since_date query param."""
+        with patch.dict("os.environ", {"XERO_DRY_RUN": "True"}):
+            with self.client.stream("GET", "/api/sync/stream?direction=xero_to_monday&since_date=2026-09-01", headers=self.headers) as response:
+                self.assertEqual(response.status_code, 200)
+                # Read the first chunk to ensure stream opens and processes the since_date
+                chunk = next(response.iter_lines())
+                self.assertIn("data:", chunk)
 
     def test_board_mappings_details(self):
         """Verify the board mappings columns and details endpoints work."""
