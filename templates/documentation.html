@@ -429,18 +429,28 @@
                             Monday.com authentication requires an API v2 Personal Token. This token authorizes M.I.R.A. to query boards, read column values, post updates, and subscribe to webhooks.
                         </p>
                         
-                        <!-- Monday Screenshot -->
-                        <div class="space-y-2">
-                            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monday.com Developer Settings Screenshot:</div>
-                            <img src="/static/images/guide-monday-token.jpg" alt="Monday.com Developer Settings and Personal API Token Guide" class="rounded-2xl border border-slate-200 shadow-md w-full object-cover">
+                        <!-- Monday Screenshots (Step 1 & Step 2) -->
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Step 1: Monday.com Profile Menu (Click Developers):</div>
+                                <img src="/static/images/guide-monday-step1-developers.png" alt="Monday.com Profile Menu showing Developers link highlighted" class="rounded-2xl border border-slate-200 shadow-md w-full object-cover">
+                                <p class="text-[11px] text-slate-500">In Monday.com, click your profile menu, then click the highlighted <strong>Developers</strong> option.</p>
+                            </div>
+
+                            <div class="space-y-2">
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Step 2: Monday Developer Center (Copy API Token):</div>
+                                <img src="/static/images/guide-monday-step2-token.png" alt="Monday.com Developer Center API Token section showing Copy button highlighted" class="rounded-2xl border border-slate-200 shadow-md w-full object-cover">
+                                <p class="text-[11px] text-slate-500">Under Developer Center, verify the <strong>API token</strong> tab is active and click the highlighted <strong>Copy</strong> button.</p>
+                            </div>
                         </div>
 
                         <div class="space-y-2 text-xs text-slate-700 bg-white p-4 rounded-xl border border-slate-200">
                             <div class="font-bold text-slate-800">Steps to Connect Monday.com:</div>
                             <ol class="list-decimal list-inside space-y-1.5 text-slate-600">
-                                <li>In Monday.com, click your <strong>Profile Avatar</strong> (bottom-left corner).</li>
-                                <li>Select <strong>Developers</strong> -&gt; <strong>Developer</strong> section -&gt; <strong>My Access Tokens</strong>.</li>
-                                <li>Copy your Personal API Token.</li>
+                                <li>In Monday.com, click your profile menu avatar.</li>
+                                <li>Click <strong>Developers</strong> (as highlighted in the Step 1 screenshot).</li>
+                                <li>In Developer Center, select <strong>API token</strong> from the left sidebar.</li>
+                                <li>Click the red highlighted <strong>Copy</strong> button next to your personal API token.</li>
                                 <li>In M.I.R.A., go to <a href="/connectors" class="text-indigo-600 font-semibold hover:underline">Platform Connectors</a>.</li>
                                 <li>Paste your token into the <strong>Monday.com API Key</strong> field.</li>
                                 <li>Ensure Board IDs are configured:
@@ -488,14 +498,8 @@
                         To connect Project M.I.R.A. with your Xero accounting organization, you must register a developer application on Xero. This provides you with a <strong>Client ID</strong> (public identifier) and a <strong>Client Secret</strong> (private key) required for OAuth 2.0 authentication.
                     </p>
 
-                    <!-- Xero Developer Portal Screenshot -->
-                    <div class="space-y-2">
-                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Xero Developer Portal Configuration Screenshot:</div>
-                        <img src="/static/images/guide-xero-developer.jpg" alt="Xero Developer Portal App Configuration, Client ID and Secret Generation Screenshot" class="rounded-2xl border border-slate-200 shadow-md w-full object-cover">
-                    </div>
-
                     <!-- Step by step instructions -->
-                    <div class="space-y-4">
+                    <div class="space-y-6">
                         <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                             <div class="font-bold text-slate-900 text-sm">Step 1: Sign in to Xero Developer Portal</div>
                             <p class="text-xs text-slate-600">
@@ -503,25 +507,30 @@
                             </p>
                         </div>
 
-                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                            <div class="font-bold text-slate-900 text-sm">Step 2: Create a New Application</div>
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                            <div class="font-bold text-slate-900 text-sm">Step 2: Create a New Application or Select Your App</div>
                             <p class="text-xs text-slate-600">
-                                Click on <strong>My Apps</strong> in the navigation bar, then click the blue <strong>New App</strong> button in the upper-right area.
+                                Click on <strong>My Apps</strong> in the top navigation bar. If you need to create a new application, click the blue <strong>New app</strong> button highlighted in red in the top-right. If your application is already listed (for example <strong>M.I.R.A.</strong>), click its name to view its configuration.
                             </p>
+                            <!-- Step 2 Screenshot -->
+                            <div class="space-y-2">
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Xero Developer Portal My Apps Screen:</div>
+                                <img src="/static/images/guide-xero-step1-myapps.png" alt="Xero Developer Portal My Apps screen showing New app button and existing app link highlighted" class="rounded-2xl border border-slate-200 shadow-md w-full object-cover">
+                            </div>
                         </div>
 
                         <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                             <div class="font-bold text-slate-900 text-sm">Step 3: Configure App Parameters</div>
                             <div class="space-y-2 text-xs text-slate-700">
                                 <ul class="list-disc list-inside space-y-1.5 text-slate-600">
-                                    <li><strong>App name:</strong> Enter <code>MIRA Integration</code> (or any descriptive title for your organization).</li>
+                                    <li><strong>App name:</strong> Enter <code>M.I.R.A.</code> (or any descriptive title for your organization).</li>
                                     <li><strong>Integration type:</strong> Select <strong>Web app</strong>.</li>
-                                    <li><strong>Company or application URL:</strong> Enter your deployment URL, e.g. <code>https://mira-software.onrender.com</code> (or <code>http://localhost:8000</code>).</li>
+                                    <li><strong>Company or application URL:</strong> Enter your deployment URL, e.g. <code>https://mira-middleware.onrender.com</code> (or <code>https://mira-software.onrender.com</code>, or <code>http://localhost:8000</code>).</li>
                                     <li><strong>OAuth 2.0 redirect URI (Mandatory):</strong> Enter the exact authorization callback URL:
                                         <div class="font-mono text-[11px] bg-white p-2.5 rounded-lg border border-slate-200 text-indigo-700 my-1 font-bold">
-                                            https://mira-software.onrender.com/oauth/xero/callback
+                                            https://mira-middleware.onrender.com/oauth/xero/callback
                                         </div>
-                                        <em>(For local development, add <code>http://localhost:8000/oauth/xero/callback</code> as an additional redirect URI).</em>
+                                        <em>(If deployed under a different domain or running locally, use your domain, e.g. <code>https://mira-software.onrender.com/oauth/xero/callback</code> or <code>http://localhost:8000/oauth/xero/callback</code>).</em>
                                     </li>
                                 </ul>
                                 <p class="text-xs text-slate-500 pt-1">
@@ -530,15 +539,32 @@
                             </div>
                         </div>
 
-                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                            <div class="font-bold text-slate-900 text-sm">Step 4: Copy the Client ID</div>
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                            <div class="font-bold text-slate-900 text-sm">Step 4: Navigate to App Configuration</div>
                             <p class="text-xs text-slate-600">
-                                On your app page, select the <strong>Configuration</strong> tab in the left sidebar. The <strong>Client id</strong> field contains a unique 36-character UUID string (e.g. <code>8f4c3a2b-1e09-4d6f-870a-3c2b1a094d6e</code>). Click the <strong>Copy</strong> button next to it.
+                                On your application details page, select the <strong>Configuration</strong> option in the left sidebar menu (highlighted in red below).
                             </p>
+                            <!-- Step 4 Screenshot -->
+                            <div class="space-y-2">
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Xero App Details Sidebar Navigation:</div>
+                                <img src="/static/images/guide-xero-step2-configuration.png" alt="Xero App Details sidebar showing Configuration link highlighted" class="rounded-2xl border border-slate-200 shadow-md w-full max-w-md object-cover">
+                            </div>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                            <div class="font-bold text-slate-900 text-sm">Step 5: Copy Client ID and Verify Redirect URI</div>
+                            <p class="text-xs text-slate-600">
+                                On the Configuration screen, verify that the <strong>Redirect URI</strong> is properly populated. Under the <strong>Client id</strong> field, click the red highlighted <strong>Copy</strong> button to copy the 36-character Client ID.
+                            </p>
+                            <!-- Step 5 Screenshot -->
+                            <div class="space-y-2">
+                                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Xero Configuration Screen (Redirect URI and Client ID Copy):</div>
+                                <img src="/static/images/guide-xero-step3-clientid.png" alt="Xero App Configuration screen showing Redirect URIs and Client id Copy button highlighted" class="rounded-2xl border border-slate-200 shadow-md w-full object-cover">
+                            </div>
                         </div>
 
                         <div class="p-5 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-3">
-                            <div class="font-bold text-amber-950 text-sm">Step 5: Generate and Copy the Client Secret</div>
+                            <div class="font-bold text-amber-950 text-sm">Step 6: Generate and Copy the Client Secret</div>
                             <p class="text-xs text-amber-900 leading-relaxed">
                                 Directly below the Client ID on the Configuration tab, locate the <strong>Client secrets</strong> section. Click the <strong>Generate a secret</strong> button.
                             </p>
@@ -551,7 +577,7 @@
                         </div>
 
                         <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                            <div class="font-bold text-slate-900 text-sm">Step 6: Authorize in M.I.R.A. Platform Connectors</div>
+                            <div class="font-bold text-slate-900 text-sm">Step 7: Authorize in M.I.R.A. Platform Connectors</div>
                             <p class="text-xs text-slate-600">
                                 Ensure your <code>XERO_CLIENT_ID</code> and <code>XERO_CLIENT_SECRET</code> are configured in M.I.R.A. (via environment variables or settings). Navigate to <a href="/connectors" class="text-indigo-600 font-bold hover:underline">Platform Connectors</a> and click <strong>Connect Xero Account OAuth</strong>. You will be redirected to Xero to grant organization permissions, and redirected back with a green <strong>Connected</strong> badge.
                             </p>
