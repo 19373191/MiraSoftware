@@ -51,6 +51,9 @@
                 {% if current_user.role in ('super_admin', 'admin') %}
                 <a href="/connectors" class="text-slate-600 hover:text-indigo-600 transition-colors">Platform Connectors</a>
                 <a href="/mappings" class="text-slate-600 hover:text-indigo-600 transition-colors">Schema Mappings</a>
+                {% endif %}
+                <a href="/documentation" class="text-slate-600 hover:text-indigo-600 transition-colors">Documentation</a>
+                {% if current_user.role in ('super_admin', 'admin') %}
                 <a href="/admin/users" class="text-slate-600 hover:text-indigo-600 transition-colors">User Management</a>
                 {% endif %}
             </div>

@@ -777,6 +777,19 @@ def reset_mappings():
             db.close()
 
 
+@app.route("/documentation", methods=["GET"])
+def documentation_page():
+    user = get_current_user_from_request()
+    if not user:
+        return redirect("/login?error=Please+log+in+to+access+documentation.")
+    return render_template(
+        "documentation.html",
+        current_user=user,
+        error=request.args.get("error"),
+        success=request.args.get("success"),
+    )
+
+
 @app.route("/sync", methods=["GET"])
 def sync_page():
     user = get_current_user_from_request()

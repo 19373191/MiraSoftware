@@ -66,6 +66,7 @@ from routes.auth_routes import router as auth_router, seed_super_admin
 from routes.connectors_routes import router as connectors_router
 from routes.mappings_routes import router as mappings_router
 from routes.sync_routes import router as sync_router
+from routes.documentation_routes import router as documentation_router
 
 from utils.auth import get_optional_current_user
 from utils.logger import logger
@@ -97,6 +98,7 @@ app.include_router(admin_router)
 app.include_router(connectors_router)
 app.include_router(mappings_router)
 app.include_router(sync_router)
+app.include_router(documentation_router)
 
 transformer = DataTransformer()
 monday_connector = MondayConnector()

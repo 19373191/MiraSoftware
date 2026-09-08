@@ -1,0 +1,815 @@
+{% extends "base.html" %}
+
+{% block title %}System Documentation & User Manual - Project M.I.R.A.{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-10">
+
+    <!-- Top Hero Banner -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-8 md:p-12 text-white shadow-xl">
+        <div class="relative z-10 max-w-3xl space-y-4">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-mono font-bold tracking-wide">
+                <span>PROJECT M.I.R.A.</span>
+                <span>•</span>
+                <span>v2.0.4 OFFICIAL USER GUIDE</span>
+            </div>
+            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                System Documentation & Operator Manual
+            </h1>
+            <p class="text-sm md:text-base text-slate-300 leading-relaxed">
+                Everything you need to master M.I.R.A. (Middleware for Integration and Real-time Automation). 
+                Learn how to navigate the platform, connect Monday.com and Xero, customize schema mappings, execute high-throughput synchronizations with date filters, and understand role permissions.
+            </p>
+            <div class="pt-2 flex flex-wrap gap-3">
+                <a href="#quick-start" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-lg shadow-indigo-600/30 flex items-center space-x-2">
+                    <span>⚡ Quick Start Guide</span>
+                </a>
+                <a href="#rbac-matrix" class="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all flex items-center space-x-2">
+                    <span>🛡️ Roles & Permissions</span>
+                </a>
+                <a href="#sync-guide" class="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all flex items-center space-x-2">
+                    <span>🔄 Running Syncs</span>
+                </a>
+            </div>
+        </div>
+        <div class="absolute -right-16 -bottom-16 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Layout: Sticky Navigation Sidebar + Content Body -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+
+        <!-- Table of Contents Sticky Sidebar -->
+        <aside class="hidden lg:block lg:col-span-1 sticky top-24 space-y-3">
+            <div class="bg-white/90 backdrop-blur-md rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex items-center space-x-2 text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                    <span>Table of Contents</span>
+                </div>
+                <nav class="space-y-1 text-xs font-medium text-slate-600">
+                    <a href="#system-overview" class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors">1. Platform Overview</a>
+                    <a href="#quick-start" class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors">2. Quick Start Walkthrough</a>
+                    <a href="#rbac-matrix" class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors">3. Roles & Permissions (RBAC)</a>
+                    <a href="#navigation-tour" class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors">4. Navigation & Interface Tour</a>
+                    <a href="#connectors-guide" class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors">5. Connecting Monday & Xero</a>
+                    <a href="#schema-mapping-guide" class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors">6. Schema Mapping Studio</a>
+                    <a href="#sync-guide" class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors">7. Running Synchronizations</a>
+                    <a href="#quarantine-policy" class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors">8. Zero-Silent-Drop Quarantine</a>
+                    <a href="#user-admin-guide" class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors">9. User Management Console</a>
+                    <a href="#troubleshooting" class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors">10. Troubleshooting & FAQ</a>
+                </nav>
+            </div>
+
+            <!-- Current User Session Info Box -->
+            <div class="bg-indigo-50/70 rounded-2xl p-4 border border-indigo-100 text-xs space-y-2">
+                <div class="font-bold text-indigo-950 flex items-center justify-between">
+                    <span>Your Active Session</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                </div>
+                <div class="text-slate-600 truncate"><strong>User:</strong> {{ current_user.email }}</div>
+                <div class="text-slate-600"><strong>Role:</strong> 
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono 
+                        {% if current_user.role == 'super_admin' %}bg-indigo-100 text-indigo-800
+                        {% elif current_user.role == 'admin' %}bg-blue-100 text-blue-800
+                        {% else %}bg-slate-200 text-slate-800{% endif %}">
+                        {{ current_user.role }}
+                    </span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="lg:col-span-3 space-y-12">
+
+            <!-- Section 1: Platform Overview -->
+            <section id="system-overview" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-5 scroll-mt-24">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">1</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Platform Overview & Architecture</h2>
+                        <p class="text-xs text-slate-500">What Project M.I.R.A. is and why it exists.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
+                    <p>
+                        <strong>Project M.I.R.A. (Middleware for Integration and Real-time Automation)</strong> is an enterprise-grade Integration Platform as a Service (iPaaS) engineered to bridge front-office CRM operations in <strong>Monday.com</strong> with back-office accounting ledgers in <strong>Xero</strong>.
+                    </p>
+                    <p>
+                        In typical enterprise environments, sales teams manage client accounts, product line items, and deals in Monday.com boards, while the finance department prepares invoices, checks compliance, and reconciles payments in Xero. Manual data re-entry causes costly accounting mistakes, missing line items, duplicate contacts, and delayed invoicing.
+                    </p>
+
+                    <!-- Core Architectural Highlights -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                            <div class="text-indigo-600 font-bold text-xs flex items-center space-x-1.5">
+                                <span>⚡ Sub-Millisecond Speed</span>
+                            </div>
+                            <p class="text-xs text-slate-500">Transforms and validates batches at over 3,300 records per second with 0.15ms median latency.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                            <div class="text-indigo-600 font-bold text-xs flex items-center space-x-1.5">
+                                <span>🛡️ Active Pre-Validation</span>
+                            </div>
+                            <p class="text-xs text-slate-500">Pydantic v2 schemas enforce finance-grade accuracy prior to submission, preventing dirty data ingestion.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                            <div class="text-indigo-600 font-bold text-xs flex items-center space-x-1.5">
+                                <span>📦 Multi-Line Grouping</span>
+                            </div>
+                            <p class="text-xs text-slate-500">Intelligently bundles related line items by client company into single, reconciled multi-line invoices.</p>
+                        </div>
+                    </div>
+
+                    <!-- Flow Diagram Card -->
+                    <div class="p-5 rounded-2xl bg-slate-900 text-slate-200 space-y-3 font-mono text-xs overflow-x-auto">
+                        <div class="text-indigo-400 font-bold text-[11px] uppercase tracking-wider">High-Level Data Pipeline</div>
+                        <div class="text-[11px] leading-6">
+                            [Monday.com Boards] ➔ [M.I.R.A. Ingestion] ➔ [Pydantic Validator] ➔ [Dynamic Schema Mapper]<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
+                            [Xero Cloud ERP] &nbsp; ◀── [OAuth 2.0 Dispatcher] ◀── [Multi-Line Aggregator & VAT Engine]<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──▶ [Bidirectional Reconciliation] ──▶ [Monday Status: 'Paid' / Invoiced]
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Quick Start Guide -->
+            <section id="quick-start" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6 scroll-mt-24">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">2</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Quick Start Walkthrough for New Users</h2>
+                        <p class="text-xs text-slate-500">4 easy steps to complete your initial end-to-end integration.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Step 1 -->
+                    <div class="p-5 rounded-2xl bg-indigo-50/40 border border-indigo-100 space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">1</span>
+                            <h3 class="font-bold text-sm text-slate-900">Connect Platforms</h3>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Navigate to <strong>Platform Connectors</strong>. Paste your Monday.com API v2 token and board IDs, then click <strong>Connect Xero</strong> to authenticate via OAuth 2.0.
+                        </p>
+                        <a href="#connectors-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Connector Guide →</a>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="p-5 rounded-2xl bg-indigo-50/40 border border-indigo-100 space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">2</span>
+                            <h3 class="font-bold text-sm text-slate-900">Verify Schema Mappings</h3>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Visit <strong>Schema Mappings</strong>. Ensure Monday columns on your Customer, Product, and Invoice boards correctly align with Xero target fields.
+                        </p>
+                        <a href="#schema-mapping-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Mapping Studio Guide →</a>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="p-5 rounded-2xl bg-indigo-50/40 border border-indigo-100 space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">3</span>
+                            <h3 class="font-bold text-sm text-slate-900">Execute Sync Batch</h3>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Go to <strong>Sync Engine</strong>. Select your direction (e.g., <em>Xero to Monday</em> or <em>Monday to Xero</em>), optionally select a start date filter, and trigger the sync.
+                        </p>
+                        <a href="#sync-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Sync Guide →</a>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="p-5 rounded-2xl bg-indigo-50/40 border border-indigo-100 space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-6 h-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">4</span>
+                            <h3 class="font-bold text-sm text-slate-900">Observe Real-Time Telemetry</h3>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Watch the live SSE terminal stream record ingestion, Pydantic validation, aggregation, and destination API responses in real time.
+                        </p>
+                        <a href="#sync-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Telemetry Guide →</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Roles & Permissions (RBAC Matrix) -->
+            <section id="rbac-matrix" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6 scroll-mt-24">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">3</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Role-Based Access Control (RBAC) & Permissions</h2>
+                        <p class="text-xs text-slate-500">Comprehensive breakdown of platform roles and granular privileges.</p>
+                    </div>
+                </div>
+
+                <div class="text-xs md:text-sm text-slate-600 space-y-3 leading-relaxed">
+                    <p>
+                        M.I.R.A. enforces strict Role-Based Access Control (RBAC) across both the FastAPI REST interface and Flask Jinja2 web views. This ensures sensitive accounting credentials, user passwords, and schema mappings can only be altered by authorized personnel.
+                    </p>
+                </div>
+
+                <!-- Role Descriptions Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Super Admin -->
+                    <div class="p-5 rounded-2xl bg-slate-50 border border-indigo-100 space-y-3 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800">
+                                super_admin
+                            </span>
+                            <span class="text-xs font-bold text-slate-500">System Owner</span>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-900">Full System Authority</h3>
+                        <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                            <li>Manage all user accounts & roles</li>
+                            <li>Create, edit, and toggle administrators</li>
+                            <li>Configure Monday API tokens & Xero OAuth</li>
+                            <li>Customize, map, and reset board schemas</li>
+                            <li>Execute all synchronization batches</li>
+                            <li>Full access to audit logs and telemetry</li>
+                        </ul>
+                    </div>
+
+                    <!-- Admin -->
+                    <div class="p-5 rounded-2xl bg-slate-50 border border-blue-100 space-y-3 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800">
+                                admin
+                            </span>
+                            <span class="text-xs font-bold text-slate-500">Administrator</span>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-900">Platform Management</h3>
+                        <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                            <li>Manage Platform Connectors (Monday & Xero)</li>
+                            <li>Configure & edit Schema Mappings</li>
+                            <li>Execute synchronizations with date filter</li>
+                            <li>Manage Operator accounts (create, toggle active)</li>
+                            <li>Cannot modify or delete Super Admin users</li>
+                            <li>Access to system logs & documentation</li>
+                        </ul>
+                    </div>
+
+                    <!-- User / Operator -->
+                    <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-200 text-slate-800">
+                                user
+                            </span>
+                            <span class="text-xs font-bold text-slate-500">Operator</span>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-900">Operational Sync</h3>
+                        <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+                            <li>Direct access to Sync Engine upon login</li>
+                            <li>Trigger manual and batch synchronization</li>
+                            <li>Select date filter and grouping options</li>
+                            <li>Monitor real-time live terminal streaming</li>
+                            <li>Read-only access to System Documentation</li>
+                            <li>Protected from editing mappings or credentials</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Granular RBAC Permissions Table -->
+                <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 font-bold text-slate-700">
+                                <th class="p-3.5">Platform Capability / Endpoint</th>
+                                <th class="p-3.5 text-center">Super Admin</th>
+                                <th class="p-3.5 text-center">Admin</th>
+                                <th class="p-3.5 text-center">Operator (User)</th>
+                                <th class="p-3.5 text-center">Viewer</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-600">
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-semibold text-slate-800">Sync Control Panel (<code>/sync</code>)</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                                <td class="p-3 text-center text-amber-600 font-semibold">Read Only</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-semibold text-slate-800">Trigger Batch Synchronizations (<code>POST /api/sync/run</code>)</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-semibold text-slate-800">Date Selector & Grouping Settings</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-semibold text-slate-800">Real-Time SSE Live Stream (<code>/api/sync/stream</code>)</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-semibold text-slate-800">System Documentation (<code>/documentation</code>)</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Available</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Available</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Available</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Available</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-semibold text-slate-800">Platform Connectors (<code>/connectors</code>)</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full Config</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full Config</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Hidden</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-semibold text-slate-800">Schema Mappings (<code>/mappings</code>)</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full Studio</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full Studio</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Hidden</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-semibold text-slate-800">User Management Console (<code>/admin/users</code>)</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ All Users</td>
+                                <td class="p-3 text-center text-blue-600 font-bold">✓ Operators Only</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Hidden</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-semibold text-slate-800">Create / Deactivate Administrators</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Restricted</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Section 4: Navigation & Interface Tour -->
+            <section id="navigation-tour" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6 scroll-mt-24">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">4</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Navigation & Interface Tour</h2>
+                        <p class="text-xs text-slate-500">Understanding the top navigation bar, status indicators, and screen layouts.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
+                    <p>
+                        The top navigation bar is permanently docked at the head of every page in M.I.R.A. It dynamically adapts according to your assigned role:
+                    </p>
+
+                    <div class="space-y-3">
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start space-x-3">
+                            <span class="font-bold text-indigo-600 font-mono text-xs mt-0.5">1. Sync Engine</span>
+                            <div class="text-xs text-slate-600">
+                                <strong>URL: <code>/sync</code></strong> • Accessible to all users. The main operational cockpit where operators configure sync directions, apply date selectors, and view real-time live terminal streaming.
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start space-x-3">
+                            <span class="font-bold text-indigo-600 font-mono text-xs mt-0.5">2. Platform Connectors</span>
+                            <div class="text-xs text-slate-600">
+                                <strong>URL: <code>/connectors</code></strong> • Visible to <code>super_admin</code> and <code>admin</code>. Used to manage API tokens, test Monday.com board reachability, and handle OAuth 2.0 handshake with Xero.
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start space-x-3">
+                            <span class="font-bold text-indigo-600 font-mono text-xs mt-0.5">3. Schema Mappings</span>
+                            <div class="text-xs text-slate-600">
+                                <strong>URL: <code>/mappings</code></strong> • Visible to <code>super_admin</code> and <code>admin</code>. The visual Schema Mapping Studio where you map Monday board columns (Customer, Product, Invoices) to Xero destination schemas.
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-200 flex items-start space-x-3">
+                            <span class="font-bold text-indigo-700 font-mono text-xs mt-0.5">4. Documentation</span>
+                            <div class="text-xs text-slate-700">
+                                <strong>URL: <code>/documentation</code></strong> • <em>Available to all roles!</em> Located conveniently between Schema Mappings and User Management. Comprehensive guide, troubleshooting, and architectural reference.
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start space-x-3">
+                            <span class="font-bold text-indigo-600 font-mono text-xs mt-0.5">5. User Management</span>
+                            <div class="text-xs text-slate-600">
+                                <strong>URL: <code>/admin/users</code></strong> • Visible to <code>super_admin</code> and <code>admin</code>. Create new users, assign roles, and toggle account activation.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 5: Platform Connectors Guide -->
+            <section id="connectors-guide" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6 scroll-mt-24">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">5</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Step-by-Step: Connecting Monday.com & Xero</h2>
+                        <p class="text-xs text-slate-500">How to configure authentication tokens, board IDs, and OAuth 2.0 gateways.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Monday.com Connection Card -->
+                    <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-lg">📊</span>
+                                <h3 class="font-bold text-sm text-slate-900">Monday.com GraphQL API v2 Configuration</h3>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">Token Auth</span>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Monday.com authentication requires an API v2 Personal Token. This token authorizes M.I.R.A. to query boards, read column values, post updates, and subscribe to webhooks.
+                        </p>
+                        <div class="space-y-2 text-xs text-slate-700 bg-white p-4 rounded-xl border border-slate-200">
+                            <div class="font-bold text-slate-800">Steps to Connect Monday.com:</div>
+                            <ol class="list-decimal list-inside space-y-1.5 text-slate-600">
+                                <li>In Monday.com, click your <strong>Profile Avatar</strong> (bottom-left corner).</li>
+                                <li>Select <strong>Developers</strong> ➔ <strong>Developer</strong> section ➔ <strong>My Access Tokens</strong>.</li>
+                                <li>Copy your Personal API Token.</li>
+                                <li>In M.I.R.A., go to <a href="/connectors" class="text-indigo-600 font-semibold hover:underline">Platform Connectors</a>.</li>
+                                <li>Paste your token into the <strong>Monday.com API Key</strong> field.</li>
+                                <li>Ensure Board IDs are configured:
+                                    <ul class="list-disc list-inside pl-4 pt-1 font-mono text-[11px] text-slate-500">
+                                        <li>Customer Board ID: <code>5101138223</code></li>
+                                        <li>Product Board ID: <code>5101138235</code></li>
+                                        <li>Invoices Board ID: <code>5101138242</code></li>
+                                    </ul>
+                                </li>
+                                <li>Click <strong>Test Connection</strong> to verify live GraphQL reachability.</li>
+                                <li>Click <strong>Save Monday Credentials</strong> to persist to SQLite.</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Xero Connection Card -->
+                    <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-lg">💼</span>
+                                <h3 class="font-bold text-sm text-slate-900">Xero OAuth 2.0 Cloud Gateway</h3>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">OAuth 2.0 + PKCE</span>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Xero uses industry-standard OAuth 2.0 with offline access scopes. Tokens expire after 30 minutes, but M.I.R.A. automatically exchanges refresh tokens without user intervention.
+                        </p>
+                        <div class="space-y-2 text-xs text-slate-700 bg-white p-4 rounded-xl border border-slate-200">
+                            <div class="font-bold text-slate-800">Steps to Connect Xero:</div>
+                            <ol class="list-decimal list-inside space-y-1.5 text-slate-600">
+                                <li>In <a href="/connectors" class="text-indigo-600 font-semibold hover:underline">Platform Connectors</a>, verify your <strong>Client ID</strong> is present.</li>
+                                <li>Confirm your Redirect URI is registered in Xero Developer Portal:
+                                    <div class="font-mono text-[11px] bg-slate-100 p-2 rounded-lg text-slate-700 my-1 overflow-x-auto">
+                                        https://mira-software.onrender.com/oauth/xero/callback (or http://localhost:8000/oauth/xero/callback)
+                                    </div>
+                                </li>
+                                <li>Click <strong>Connect Xero Account</strong>.</li>
+                                <li>Authenticate with your Xero credentials and select the target Organization/Tenant.</li>
+                                <li>Click <strong>Allow Access</strong>. You will be redirected back with an active authorization code.</li>
+                                <li>M.I.R.A. automatically exchanges the code, saves encrypted access & refresh tokens, and marks the status as <span class="text-emerald-600 font-bold">Connected</span>.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 6: Schema Mapping Studio Guide -->
+            <section id="schema-mapping-guide" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6 scroll-mt-24">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">6</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Schema Mapping Studio Guide</h2>
+                        <p class="text-xs text-slate-500">Configuring translation rules between Monday columns and Xero REST API models.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
+                    <p>
+                        The <strong>Schema Mapping Studio (<code>/mappings</code>)</strong> gives administrators visual control over how Monday.com columns correspond to Xero accounting entities. M.I.R.A. displays both the <strong>user-friendly Monday column name</strong> (e.g. <em>Account Number</em>) and the <strong>backend API ID</strong> (e.g. <code>text_mm663vnh</code>) for absolute clarity.
+                    </p>
+
+                    <!-- Board Mappings Breakdown -->
+                    <div class="space-y-4 pt-2">
+                        <!-- Customer Board -->
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-sm text-slate-900">Customer Board (ID: <code>5101138223</code>) ➔ Xero Contact Schema</h3>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-100 text-indigo-800">Upsert Contact</span>
+                            </div>
+                            <p class="text-xs text-slate-500">Maps customer records from Monday into Xero Contacts, matching by Account Number or Email.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">Name</span> (<code>name</code>)<br>
+                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.Name</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">Account Number</span> (<code>text_mm663vnh</code>)<br>
+                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.AccountNumber</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">Email</span> (<code>email_mm5w89d8</code>)<br>
+                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.EmailAddress</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">Phone</span> (<code>text_mm66cg69</code>)<br>
+                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.Phones[0].PhoneNumber</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">Address</span> (<code>text_mm5wwdh</code>)<br>
+                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.Addresses[0].AddressLine1</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">First / Last Name</span><br>
+                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.FirstName / LastName</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Product Board -->
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-sm text-slate-900">Product Board (ID: <code>5101138235</code>) ➔ Xero Items Schema</h3>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-100 text-blue-800">Inventory Items</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Monday:</span> <code>item_name</code> ➔ <span class="text-indigo-600">Xero:</span> <code>Item.Name</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Monday:</span> <code>item_number</code> ➔ <span class="text-indigo-600">Xero:</span> <code>Item.Code</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Monday:</span> <code>cost_price</code> ➔ <span class="text-indigo-600">Xero:</span> <code>Item.PurchaseDetails.UnitPrice</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Monday:</span> <code>selling_price</code> ➔ <span class="text-indigo-600">Xero:</span> <code>Item.SalesDetails.UnitPrice</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Invoice Board -->
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-bold text-sm text-slate-900">Invoice Board (ID: <code>5101138242</code>) ➔ Xero Invoices & Line Items</h3>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-100 text-emerald-800">Multi-Line ACCREC</span>
+                            </div>
+                            <p class="text-xs text-slate-500">Maps deal parent pulses to invoice headers and subitems to invoice line items.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Subitem Relation:</span> <code>board_relation_mm6jp0r9</code><br>
+                                    <span class="text-indigo-600">➔ Xero:</span> <code>Invoice.LineItems[0].ItemCode</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Subitem Quantity:</span> <code>numeric_mm66tnmw</code><br>
+                                    <span class="text-indigo-600">➔ Xero:</span> <code>Invoice.LineItems[0].Quantity</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Subitem Unit Price:</span> <code>numeric_mm662hn4</code><br>
+                                    <span class="text-indigo-600">➔ Xero:</span> <code>Invoice.LineItems[0].UnitAmount</code>
+                                </div>
+                                <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                    <span class="text-slate-400">Subitem Description:</span> <code>lookup_mm6j8ck6</code><br>
+                                    <span class="text-indigo-600">➔ Xero:</span> <code>Invoice.LineItems[0].Description</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schema Tools -->
+                    <div class="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-xs space-y-2">
+                        <div class="font-bold text-indigo-950">Studio Action Buttons:</div>
+                        <ul class="list-disc list-inside space-y-1 text-slate-600">
+                            <li><strong>Auto Match:</strong> Scans board column titles and target Xero field names using fuzzy string matching to link them automatically.</li>
+                            <li><strong>Save Mappings:</strong> Persists your custom configuration directly into the SQLite database.</li>
+                            <li><strong>Reset to Defaults:</strong> Discards changes and restores the certified <code>v2.0.4</code> baseline schema.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 7: Running Synchronizations Guide -->
+            <section id="sync-guide" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6 scroll-mt-24">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">7</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Step-by-Step: Running Synchronizations</h2>
+                        <p class="text-xs text-slate-500">Choosing directions, setting the date filter, executing runs, and reading live logs.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
+                    <p>
+                        The <strong>Sync Engine (<code>/sync</code>)</strong> is the command center for data synchronization. Both administrators and operators have access to run batches and monitor telemetry.
+                    </p>
+
+                    <!-- Directions Breakdown -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="text-indigo-600 font-bold text-xs uppercase tracking-wider">Direction 1</div>
+                            <h3 class="font-bold text-sm text-slate-900">Xero to Monday.com (Default)</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                Ingests paid invoices, contacts, and account numbers from Xero. Matches Monday pulses by Account Number or Reference, updating their status to <em>"Paid"</em> or <em>"Invoiced"</em> and logging reconciliation audit comments.
+                            </p>
+                        </div>
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="text-indigo-600 font-bold text-xs uppercase tracking-wider">Direction 2</div>
+                            <h3 class="font-bold text-sm text-slate-900">Monday.com to Xero</h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">
+                                Ingests closed deals and subitem rows from Monday. Transforms payloads into standard Xero Contact and Multi-Line Invoice entities, creating Draft or Authorised invoices in Xero with standard UK 20% VAT treatment.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Operational Settings Explained -->
+                    <div class="space-y-3 pt-2">
+                        <h3 class="font-bold text-sm text-slate-900">Configurable Operational Parameters:</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                                <div class="font-bold text-slate-800">📅 Date Selector Filter (<code>since_date</code>)</div>
+                                <p class="text-slate-500 leading-relaxed">
+                                    Allows syncing records created or modified <strong>on or after a specific calendar date</strong>. 
+                                    Leave blank to run an incremental sync (all pending records).
+                                </p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                                <div class="font-bold text-slate-800">📑 Target Account Code</div>
+                                <p class="text-slate-500 leading-relaxed">
+                                    Assigns the general ledger account code for generated invoice lines (e.g. <code>200 - Sales</code>, <code>260 - Other Revenue</code>).
+                                </p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                                <div class="font-bold text-slate-800">🏢 Group Multiple Items by Company</div>
+                                <p class="text-slate-500 leading-relaxed">
+                                    When enabled, consolidates multiple deals or line items for the same client company into a single multi-line draft invoice instead of isolated single-line invoices.
+                                </p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                                <div class="font-bold text-slate-800">📊 Batch Count / Limit</div>
+                                <p class="text-slate-500 leading-relaxed">
+                                    Controls maximum number of items processed per batch run (e.g. 10, 50, 100, 500) to respect destination API rate limits.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Terminal & SSE -->
+                    <div class="p-5 rounded-2xl bg-slate-900 text-slate-200 space-y-3 font-mono text-xs">
+                        <div class="flex items-center justify-between text-indigo-400 font-bold text-[11px] uppercase tracking-wider">
+                            <span>Real-Time Live SSE Terminal Streaming</span>
+                            <span class="flex items-center space-x-1.5 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span><span>CONNECTED</span></span>
+                        </div>
+                        <p class="text-slate-400 text-[11px] leading-relaxed">
+                            When you click <strong>"Execute Sync Engine"</strong>, M.I.R.A. opens a persistent Server-Sent Events (SSE) connection at <code>/api/sync/stream</code>. Every lifecycle event is streamed directly to your browser:
+                        </p>
+                        <div class="p-3 bg-black/50 rounded-xl space-y-1 text-[11px] text-emerald-400 font-mono">
+                            <div>[INFO] Ingestion phase initiated for target board 5101138223...</div>
+                            <div>[INFO] Fetched 50 records. Initiating Pydantic schema validation...</div>
+                            <div>[VALID] Record 1: Deal 'Global Tech Q3 Renewal' passed validation.</div>
+                            <div>[TRANS] Normalising phone: +44 20 7946 0912 | Address: London EC2R 8AH.</div>
+                            <div>[XERO] POST /api.xro/2.0/Invoices ➔ HTTP 200 OK (INV-00482 created).</div>
+                            <div>[SUCCESS] Batch execution completed in 0.084s (Throughput: 3,120 rec/sec).</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 8: Zero-Silent-Failure & Error Quarantine -->
+            <section id="quarantine-policy" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6 scroll-mt-24">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">8</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Zero-Silent-Failure & Quarantine Architecture</h2>
+                        <p class="text-xs text-slate-500">How M.I.R.A. isolates bad records without breaking your integration pipeline.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
+                    <p>
+                        Unlike commercial integration tools that silently drop records when encountering missing fields, M.I.R.A. implements a strict <strong>Zero-Silent-Failure Quarantine Policy</strong>:
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-2">
+                            <div class="font-bold text-amber-900 text-xs flex items-center space-x-1.5">
+                                <span>⚠️ Fault Isolation</span>
+                            </div>
+                            <p class="text-xs text-amber-800 leading-relaxed">
+                                If record #14 out of 100 has a missing company name or invalid number, only record #14 is quarantined. The remaining 99 records process smoothly without interruption.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 space-y-2">
+                            <div class="font-bold text-indigo-950 text-xs flex items-center space-x-1.5">
+                                <span>📋 Structured Diagnostics</span>
+                            </div>
+                            <p class="text-xs text-indigo-900 leading-relaxed">
+                                Quarantined records are logged in <code>SyncLog</code> with exact field names, row IDs, and error diagnostics so administrators can rectify the data in Monday.com and re-sync.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 9: User Management Console -->
+            <section id="user-admin-guide" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6 scroll-mt-24">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">9</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">User Management Console (Admins Only)</h2>
+                        <p class="text-xs text-slate-500">Creating users, assigning roles, and toggling active access.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
+                    <p>
+                        Located at <strong>User Management (<code>/admin/users</code>)</strong>, this view allows administrators to control who can access the integration middleware:
+                    </p>
+                    <div class="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs text-slate-700">
+                        <div class="font-bold text-slate-900">Key User Management Operations:</div>
+                        <ul class="list-disc list-inside space-y-1.5 text-slate-600">
+                            <li><strong>Create User:</strong> Enter email address, temporary password (min 6 characters), and select RBAC role (<code>admin</code> or <code>user</code>).</li>
+                            <li><strong>Super Admin Guard:</strong> Only existing <code>super_admin</code> users can create or edit other administrator accounts. Standard <code>admin</code> users can only provision <code>user</code> (operator) accounts.</li>
+                            <li><strong>Toggle Active Status:</strong> Click the status switch to immediately revoke or reactivate user access without deleting their historical audit records.</li>
+                            <li><strong>Password Security:</strong> All credentials are salted and hashed using PBKDF2 with SHA-256 (100,000 rounds).</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 10: Troubleshooting & FAQ -->
+            <section id="troubleshooting" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-sm space-y-6 scroll-mt-24">
+                <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">10</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Troubleshooting & Frequently Asked Questions (FAQ)</h2>
+                        <p class="text-xs text-slate-500">Resolutions for common setup errors and operational edge cases.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-xs md:text-sm">
+                    <!-- Q1 -->
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                        <h3 class="font-bold text-slate-900">Q: What should I do if the Xero badge says "Token Expired"?</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Xero access tokens expire after 30 minutes. M.I.R.A. automatically refreshes the token using the refresh token stored in your database during any sync run. If your refresh token has expired (after 60 days of inactivity), simply navigate to <a href="/connectors" class="text-indigo-600 font-semibold hover:underline">Platform Connectors</a> and click <strong>"Connect Xero Account"</strong> to re-authorize.
+                        </p>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                        <h3 class="font-bold text-slate-900">Q: Where can I find my Monday.com Board IDs?</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Open your board in Monday.com. Look at your browser's address bar. The URL follows this format: <code>https://yourcompany.monday.com/boards/<strong>5101138223</strong></code>. The numerical digits at the end are your Board ID.
+                        </p>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                        <h3 class="font-bold text-slate-900">Q: How does the Date Selector filter work?</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            The <strong>"Sync records on or after"</strong> date selector filters records based on their creation or modification timestamp. If you choose <code>2026-09-01</code>, only records dated on or after September 1st, 2026 will be processed. If left empty, all unreconciled records are evaluated.
+                        </p>
+                    </div>
+
+                    <!-- Q4 -->
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                        <h3 class="font-bold text-slate-900">Q: Can an Operator accidentally change schema mappings?</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            No. The Schema Mappings and Platform Connectors tabs are restricted to <code>super_admin</code> and <code>admin</code> roles. Operators only see the Sync Engine and this Documentation guide.
+                        </p>
+                    </div>
+
+                    <!-- Q5 -->
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                        <h3 class="font-bold text-slate-900">Q: How does M.I.R.A. prevent duplicate invoices in Xero?</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            M.I.R.A. includes an idempotency engine. Every generated invoice sets the Monday pulse ID or deal reference in Xero's <code>Reference</code> field. Before creating an invoice, M.I.R.A. checks if an invoice with that reference already exists.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom Call to Action Card -->
+            <div class="p-6 md:p-8 rounded-3xl bg-slate-100 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="space-y-1 text-center sm:text-left">
+                    <h3 class="font-bold text-slate-900 text-sm">Ready to start synchronizing?</h3>
+                    <p class="text-xs text-slate-500">Jump straight to the control panel to execute a batch or monitor live telemetry.</p>
+                </div>
+                <a href="/sync" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition-all whitespace-nowrap">
+                    Go to Sync Engine →
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
