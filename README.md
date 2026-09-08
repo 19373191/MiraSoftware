@@ -1,7 +1,7 @@
 # Project M.I.R.A. (Middleware for Integration and Real-time Automation)
 
 > **Enterprise-Grade Integration Middleware Connecting Monday.com and Xero Accounting**  
-> *MSc Advanced Computer Science Dissertation Project — Researcher: Mira Dalal (ID: 19373191) · Supervisor: Dr Samia Kamal*
+> *MSc Advanced Computer Science Dissertation Project - Researcher: Mira Dalal (ID: 19373191) · Supervisor: Dr Samia Kamal*
 
 ---
 

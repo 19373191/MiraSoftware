@@ -22,13 +22,13 @@
             </p>
             <div class="pt-2 flex flex-wrap gap-3">
                 <a href="#quick-start" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-lg shadow-indigo-600/30 flex items-center space-x-2">
-                    <span>⚡ Quick Start Guide</span>
+                    <span>Quick Start Guide</span>
                 </a>
                 <a href="#rbac-matrix" class="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all flex items-center space-x-2">
-                    <span>🛡️ Roles & Permissions</span>
+                    <span>Roles & Permissions</span>
                 </a>
                 <a href="#sync-guide" class="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all flex items-center space-x-2">
-                    <span>🔄 Running Syncs</span>
+                    <span>Running Syncs</span>
                 </a>
             </div>
         </div>
@@ -101,20 +101,20 @@
                     <!-- Core Architectural Highlights -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
-                            <div class="text-indigo-600 font-bold text-xs flex items-center space-x-1.5">
-                                <span>⚡ Sub-Millisecond Speed</span>
+                            <div class="text-indigo-600 font-bold text-xs">
+                                <span>Sub-Millisecond Speed</span>
                             </div>
                             <p class="text-xs text-slate-500">Transforms and validates batches at over 3,300 records per second with 0.15ms median latency.</p>
                         </div>
                         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
-                            <div class="text-indigo-600 font-bold text-xs flex items-center space-x-1.5">
-                                <span>🛡️ Active Pre-Validation</span>
+                            <div class="text-indigo-600 font-bold text-xs">
+                                <span>Active Pre-Validation</span>
                             </div>
                             <p class="text-xs text-slate-500">Pydantic v2 schemas enforce finance-grade accuracy prior to submission, preventing dirty data ingestion.</p>
                         </div>
                         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
-                            <div class="text-indigo-600 font-bold text-xs flex items-center space-x-1.5">
-                                <span>📦 Multi-Line Grouping</span>
+                            <div class="text-indigo-600 font-bold text-xs">
+                                <span>Multi-Line Grouping</span>
                             </div>
                             <p class="text-xs text-slate-500">Intelligently bundles related line items by client company into single, reconciled multi-line invoices.</p>
                         </div>
@@ -124,12 +124,12 @@
                     <div class="p-5 rounded-2xl bg-slate-900 text-slate-200 space-y-3 font-mono text-xs overflow-x-auto">
                         <div class="text-indigo-400 font-bold text-[11px] uppercase tracking-wider">High-Level Data Pipeline</div>
                         <div class="text-[11px] leading-6">
-                            [Monday.com Boards] ➔ [M.I.R.A. Ingestion] ➔ [Pydantic Validator] ➔ [Dynamic Schema Mapper]<br>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-                            [Xero Cloud ERP] &nbsp; ◀── [OAuth 2.0 Dispatcher] ◀── [Multi-Line Aggregator & VAT Engine]<br>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──▶ [Bidirectional Reconciliation] ──▶ [Monday Status: 'Paid' / Invoiced]
+                            [Monday.com Boards] -&gt; [M.I.R.A. Ingestion] -&gt; [Pydantic Validator] -&gt; [Dynamic Schema Mapper]<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v<br>
+                            [Xero Cloud ERP] &nbsp; &lt;-- [OAuth 2.0 Dispatcher] &lt;-- [Multi-Line Aggregator &amp; VAT Engine]<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+--&gt; [Bidirectional Reconciliation] --&gt; [Monday Status: 'Paid' / Invoiced]
                         </div>
                     </div>
                 </div>
@@ -155,7 +155,7 @@
                         <p class="text-xs text-slate-600 leading-relaxed">
                             Navigate to <strong>Platform Connectors</strong>. Paste your Monday.com API v2 token and board IDs, then click <strong>Connect Xero</strong> to authenticate via OAuth 2.0.
                         </p>
-                        <a href="#connectors-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Connector Guide →</a>
+                        <a href="#connectors-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Connector Guide -&gt;</a>
                     </div>
 
                     <!-- Step 2 -->
@@ -167,7 +167,7 @@
                         <p class="text-xs text-slate-600 leading-relaxed">
                             Visit <strong>Schema Mappings</strong>. Ensure Monday columns on your Customer, Product, and Invoice boards correctly align with Xero target fields.
                         </p>
-                        <a href="#schema-mapping-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Mapping Studio Guide →</a>
+                        <a href="#schema-mapping-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Mapping Studio Guide -&gt;</a>
                     </div>
 
                     <!-- Step 3 -->
@@ -179,7 +179,7 @@
                         <p class="text-xs text-slate-600 leading-relaxed">
                             Go to <strong>Sync Engine</strong>. Select your direction (e.g., <em>Xero to Monday</em> or <em>Monday to Xero</em>), optionally select a start date filter, and trigger the sync.
                         </p>
-                        <a href="#sync-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Sync Guide →</a>
+                        <a href="#sync-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Sync Guide -&gt;</a>
                     </div>
 
                     <!-- Step 4 -->
@@ -191,7 +191,7 @@
                         <p class="text-xs text-slate-600 leading-relaxed">
                             Watch the live SSE terminal stream record ingestion, Pydantic validation, aggregation, and destination API responses in real time.
                         </p>
-                        <a href="#sync-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Telemetry Guide →</a>
+                        <a href="#sync-guide" class="inline-block text-xs font-semibold text-indigo-600 hover:underline">View Telemetry Guide -&gt;</a>
                     </div>
                 </div>
             </section>
@@ -224,9 +224,9 @@
                         </div>
                         <h3 class="font-bold text-sm text-slate-900">Full System Authority</h3>
                         <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
-                            <li>Manage all user accounts & roles</li>
+                            <li>Manage all user accounts and roles</li>
                             <li>Create, edit, and toggle administrators</li>
-                            <li>Configure Monday API tokens & Xero OAuth</li>
+                            <li>Configure Monday API tokens and Xero OAuth</li>
                             <li>Customize, map, and reset board schemas</li>
                             <li>Execute all synchronization batches</li>
                             <li>Full access to audit logs and telemetry</li>
@@ -243,12 +243,12 @@
                         </div>
                         <h3 class="font-bold text-sm text-slate-900">Platform Management</h3>
                         <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
-                            <li>Manage Platform Connectors (Monday & Xero)</li>
-                            <li>Configure & edit Schema Mappings</li>
+                            <li>Manage Platform Connectors (Monday and Xero)</li>
+                            <li>Configure and edit Schema Mappings</li>
                             <li>Execute synchronizations with date filter</li>
                             <li>Manage Operator accounts (create, toggle active)</li>
                             <li>Cannot modify or delete Super Admin users</li>
-                            <li>Access to system logs & documentation</li>
+                            <li>Access to system logs and documentation</li>
                         </ul>
                     </div>
 
@@ -287,66 +287,66 @@
                         <tbody class="divide-y divide-slate-100 text-slate-600">
                             <tr class="hover:bg-slate-50/50">
                                 <td class="p-3 font-semibold text-slate-800">Sync Control Panel (<code>/sync</code>)</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full</td>
                                 <td class="p-3 text-center text-amber-600 font-semibold">Read Only</td>
                             </tr>
                             <tr class="hover:bg-slate-50/50">
                                 <td class="p-3 font-semibold text-slate-800">Trigger Batch Synchronizations (<code>POST /api/sync/run</code>)</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Allowed</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Allowed</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Allowed</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Denied</td>
                             </tr>
                             <tr class="hover:bg-slate-50/50">
                                 <td class="p-3 font-semibold text-slate-800">Date Selector & Grouping Settings</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Allowed</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Allowed</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Allowed</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Denied</td>
                             </tr>
                             <tr class="hover:bg-slate-50/50">
                                 <td class="p-3 font-semibold text-slate-800">Real-Time SSE Live Stream (<code>/api/sync/stream</code>)</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full</td>
                             </tr>
                             <tr class="hover:bg-slate-50/50">
                                 <td class="p-3 font-semibold text-slate-800">System Documentation (<code>/documentation</code>)</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Available</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Available</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Available</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Available</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Available</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Available</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Available</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Available</td>
                             </tr>
                             <tr class="hover:bg-slate-50/50">
                                 <td class="p-3 font-semibold text-slate-800">Platform Connectors (<code>/connectors</code>)</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full Config</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full Config</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Hidden</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full Config</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full Config</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Hidden</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Denied</td>
                             </tr>
                             <tr class="hover:bg-slate-50/50">
                                 <td class="p-3 font-semibold text-slate-800">Schema Mappings (<code>/mappings</code>)</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full Studio</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Full Studio</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Hidden</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full Studio</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Full Studio</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Hidden</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Denied</td>
                             </tr>
                             <tr class="hover:bg-slate-50/50">
                                 <td class="p-3 font-semibold text-slate-800">User Management Console (<code>/admin/users</code>)</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ All Users</td>
-                                <td class="p-3 text-center text-blue-600 font-bold">✓ Operators Only</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Hidden</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">All Users</td>
+                                <td class="p-3 text-center text-blue-600 font-bold">Operators Only</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Hidden</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Denied</td>
                             </tr>
                             <tr class="hover:bg-slate-50/50">
                                 <td class="p-3 font-semibold text-slate-800">Create / Deactivate Administrators</td>
-                                <td class="p-3 text-center text-emerald-600 font-bold">✓ Allowed</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Restricted</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
-                                <td class="p-3 text-center text-red-500 font-bold">✗ Denied</td>
+                                <td class="p-3 text-center text-emerald-600 font-bold">Allowed</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Restricted</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Denied</td>
+                                <td class="p-3 text-center text-red-500 font-bold">Denied</td>
                             </tr>
                         </tbody>
                     </table>
@@ -422,7 +422,6 @@
                     <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
-                                <span class="text-lg">📊</span>
                                 <h3 class="font-bold text-sm text-slate-900">Monday.com GraphQL API v2 Configuration</h3>
                             </div>
                             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">Token Auth</span>
@@ -434,7 +433,7 @@
                             <div class="font-bold text-slate-800">Steps to Connect Monday.com:</div>
                             <ol class="list-decimal list-inside space-y-1.5 text-slate-600">
                                 <li>In Monday.com, click your <strong>Profile Avatar</strong> (bottom-left corner).</li>
-                                <li>Select <strong>Developers</strong> ➔ <strong>Developer</strong> section ➔ <strong>My Access Tokens</strong>.</li>
+                                <li>Select <strong>Developers</strong> -&gt; <strong>Developer</strong> section -&gt; <strong>My Access Tokens</strong>.</li>
                                 <li>Copy your Personal API Token.</li>
                                 <li>In M.I.R.A., go to <a href="/connectors" class="text-indigo-600 font-semibold hover:underline">Platform Connectors</a>.</li>
                                 <li>Paste your token into the <strong>Monday.com API Key</strong> field.</li>
@@ -455,7 +454,6 @@
                     <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
-                                <span class="text-lg">💼</span>
                                 <h3 class="font-bold text-sm text-slate-900">Xero OAuth 2.0 Cloud Gateway</h3>
                             </div>
                             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">OAuth 2.0 + PKCE</span>
@@ -475,7 +473,7 @@
                                 <li>Click <strong>Connect Xero Account</strong>.</li>
                                 <li>Authenticate with your Xero credentials and select the target Organization/Tenant.</li>
                                 <li>Click <strong>Allow Access</strong>. You will be redirected back with an active authorization code.</li>
-                                <li>M.I.R.A. automatically exchanges the code, saves encrypted access & refresh tokens, and marks the status as <span class="text-emerald-600 font-bold">Connected</span>.</li>
+                                <li>M.I.R.A. automatically exchanges the code, saves encrypted access and refresh tokens, and marks the status as <span class="text-emerald-600 font-bold">Connected</span>.</li>
                             </ol>
                         </div>
                     </div>
@@ -502,34 +500,34 @@
                         <!-- Customer Board -->
                         <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                             <div class="flex items-center justify-between">
-                                <h3 class="font-bold text-sm text-slate-900">Customer Board (ID: <code>5101138223</code>) ➔ Xero Contact Schema</h3>
+                                <h3 class="font-bold text-sm text-slate-900">Customer Board (ID: <code>5101138223</code>) -&gt; Xero Contact Schema</h3>
                                 <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-100 text-indigo-800">Upsert Contact</span>
                             </div>
                             <p class="text-xs text-slate-500">Maps customer records from Monday into Xero Contacts, matching by Account Number or Email.</p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
                                     <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">Name</span> (<code>name</code>)<br>
-                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.Name</code>
+                                    <span class="text-indigo-600">-&gt; Xero:</span> <code>Contact.Name</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
                                     <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">Account Number</span> (<code>text_mm663vnh</code>)<br>
-                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.AccountNumber</code>
+                                    <span class="text-indigo-600">-&gt; Xero:</span> <code>Contact.AccountNumber</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
                                     <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">Email</span> (<code>email_mm5w89d8</code>)<br>
-                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.EmailAddress</code>
+                                    <span class="text-indigo-600">-&gt; Xero:</span> <code>Contact.EmailAddress</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
                                     <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">Phone</span> (<code>text_mm66cg69</code>)<br>
-                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.Phones[0].PhoneNumber</code>
+                                    <span class="text-indigo-600">-&gt; Xero:</span> <code>Contact.Phones[0].PhoneNumber</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
                                     <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">Address</span> (<code>text_mm5wwdh</code>)<br>
-                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.Addresses[0].AddressLine1</code>
+                                    <span class="text-indigo-600">-&gt; Xero:</span> <code>Contact.Addresses[0].AddressLine1</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
                                     <span class="text-slate-400">Monday:</span> <span class="font-bold text-slate-700">First / Last Name</span><br>
-                                    <span class="text-indigo-600">➔ Xero:</span> <code>Contact.FirstName / LastName</code>
+                                    <span class="text-indigo-600">-&gt; Xero:</span> <code>Contact.FirstName / LastName</code>
                                 </div>
                             </div>
                         </div>
@@ -537,21 +535,21 @@
                         <!-- Product Board -->
                         <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                             <div class="flex items-center justify-between">
-                                <h3 class="font-bold text-sm text-slate-900">Product Board (ID: <code>5101138235</code>) ➔ Xero Items Schema</h3>
+                                <h3 class="font-bold text-sm text-slate-900">Product Board (ID: <code>5101138235</code>) -&gt; Xero Items Schema</h3>
                                 <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-100 text-blue-800">Inventory Items</span>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
-                                    <span class="text-slate-400">Monday:</span> <code>item_name</code> ➔ <span class="text-indigo-600">Xero:</span> <code>Item.Name</code>
+                                    <span class="text-slate-400">Monday:</span> <code>item_name</code> -&gt; <span class="text-indigo-600">Xero:</span> <code>Item.Name</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
-                                    <span class="text-slate-400">Monday:</span> <code>item_number</code> ➔ <span class="text-indigo-600">Xero:</span> <code>Item.Code</code>
+                                    <span class="text-slate-400">Monday:</span> <code>item_number</code> -&gt; <span class="text-indigo-600">Xero:</span> <code>Item.Code</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
-                                    <span class="text-slate-400">Monday:</span> <code>cost_price</code> ➔ <span class="text-indigo-600">Xero:</span> <code>Item.PurchaseDetails.UnitPrice</code>
+                                    <span class="text-slate-400">Monday:</span> <code>cost_price</code> -&gt; <span class="text-indigo-600">Xero:</span> <code>Item.PurchaseDetails.UnitPrice</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
-                                    <span class="text-slate-400">Monday:</span> <code>selling_price</code> ➔ <span class="text-indigo-600">Xero:</span> <code>Item.SalesDetails.UnitPrice</code>
+                                    <span class="text-slate-400">Monday:</span> <code>selling_price</code> -&gt; <span class="text-indigo-600">Xero:</span> <code>Item.SalesDetails.UnitPrice</code>
                                 </div>
                             </div>
                         </div>
@@ -559,26 +557,26 @@
                         <!-- Invoice Board -->
                         <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                             <div class="flex items-center justify-between">
-                                <h3 class="font-bold text-sm text-slate-900">Invoice Board (ID: <code>5101138242</code>) ➔ Xero Invoices & Line Items</h3>
+                                <h3 class="font-bold text-sm text-slate-900">Invoice Board (ID: <code>5101138242</code>) -&gt; Xero Invoices & Line Items</h3>
                                 <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-100 text-emerald-800">Multi-Line ACCREC</span>
                             </div>
                             <p class="text-xs text-slate-500">Maps deal parent pulses to invoice headers and subitems to invoice line items.</p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
                                     <span class="text-slate-400">Subitem Relation:</span> <code>board_relation_mm6jp0r9</code><br>
-                                    <span class="text-indigo-600">➔ Xero:</span> <code>Invoice.LineItems[0].ItemCode</code>
+                                    <span class="text-indigo-600">-&gt; Xero:</span> <code>Invoice.LineItems[0].ItemCode</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
                                     <span class="text-slate-400">Subitem Quantity:</span> <code>numeric_mm66tnmw</code><br>
-                                    <span class="text-indigo-600">➔ Xero:</span> <code>Invoice.LineItems[0].Quantity</code>
+                                    <span class="text-indigo-600">-&gt; Xero:</span> <code>Invoice.LineItems[0].Quantity</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
                                     <span class="text-slate-400">Subitem Unit Price:</span> <code>numeric_mm662hn4</code><br>
-                                    <span class="text-indigo-600">➔ Xero:</span> <code>Invoice.LineItems[0].UnitAmount</code>
+                                    <span class="text-indigo-600">-&gt; Xero:</span> <code>Invoice.LineItems[0].UnitAmount</code>
                                 </div>
                                 <div class="bg-white p-2.5 rounded-xl border border-slate-200">
                                     <span class="text-slate-400">Subitem Description:</span> <code>lookup_mm6j8ck6</code><br>
-                                    <span class="text-indigo-600">➔ Xero:</span> <code>Invoice.LineItems[0].Description</code>
+                                    <span class="text-indigo-600">-&gt; Xero:</span> <code>Invoice.LineItems[0].Description</code>
                                 </div>
                             </div>
                         </div>
@@ -634,26 +632,26 @@
                         <h3 class="font-bold text-sm text-slate-900">Configurable Operational Parameters:</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                             <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
-                                <div class="font-bold text-slate-800">📅 Date Selector Filter (<code>since_date</code>)</div>
+                                <div class="font-bold text-slate-800">Date Selector Filter (<code>since_date</code>)</div>
                                 <p class="text-slate-500 leading-relaxed">
                                     Allows syncing records created or modified <strong>on or after a specific calendar date</strong>. 
                                     Leave blank to run an incremental sync (all pending records).
                                 </p>
                             </div>
                             <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
-                                <div class="font-bold text-slate-800">📑 Target Account Code</div>
+                                <div class="font-bold text-slate-800">Target Account Code</div>
                                 <p class="text-slate-500 leading-relaxed">
                                     Assigns the general ledger account code for generated invoice lines (e.g. <code>200 - Sales</code>, <code>260 - Other Revenue</code>).
                                 </p>
                             </div>
                             <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
-                                <div class="font-bold text-slate-800">🏢 Group Multiple Items by Company</div>
+                                <div class="font-bold text-slate-800">Group Multiple Items by Company</div>
                                 <p class="text-slate-500 leading-relaxed">
                                     When enabled, consolidates multiple deals or line items for the same client company into a single multi-line draft invoice instead of isolated single-line invoices.
                                 </p>
                             </div>
                             <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1">
-                                <div class="font-bold text-slate-800">📊 Batch Count / Limit</div>
+                                <div class="font-bold text-slate-800">Batch Count / Limit</div>
                                 <p class="text-slate-500 leading-relaxed">
                                     Controls maximum number of items processed per batch run (e.g. 10, 50, 100, 500) to respect destination API rate limits.
                                 </p>
@@ -675,7 +673,7 @@
                             <div>[INFO] Fetched 50 records. Initiating Pydantic schema validation...</div>
                             <div>[VALID] Record 1: Deal 'Global Tech Q3 Renewal' passed validation.</div>
                             <div>[TRANS] Normalising phone: +44 20 7946 0912 | Address: London EC2R 8AH.</div>
-                            <div>[XERO] POST /api.xro/2.0/Invoices ➔ HTTP 200 OK (INV-00482 created).</div>
+                            <div>[XERO] POST /api.xro/2.0/Invoices -&gt; HTTP 200 OK (INV-00482 created).</div>
                             <div>[SUCCESS] Batch execution completed in 0.084s (Throughput: 3,120 rec/sec).</div>
                         </div>
                     </div>
@@ -699,16 +697,16 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-2">
-                            <div class="font-bold text-amber-900 text-xs flex items-center space-x-1.5">
-                                <span>⚠️ Fault Isolation</span>
+                            <div class="font-bold text-amber-900 text-xs">
+                                <span>Fault Isolation</span>
                             </div>
                             <p class="text-xs text-amber-800 leading-relaxed">
                                 If record #14 out of 100 has a missing company name or invalid number, only record #14 is quarantined. The remaining 99 records process smoothly without interruption.
                             </p>
                         </div>
                         <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 space-y-2">
-                            <div class="font-bold text-indigo-950 text-xs flex items-center space-x-1.5">
-                                <span>📋 Structured Diagnostics</span>
+                            <div class="font-bold text-indigo-950 text-xs">
+                                <span>Structured Diagnostics</span>
                             </div>
                             <p class="text-xs text-indigo-900 leading-relaxed">
                                 Quarantined records are logged in <code>SyncLog</code> with exact field names, row IDs, and error diagnostics so administrators can rectify the data in Monday.com and re-sync.
@@ -804,7 +802,7 @@
                     <p class="text-xs text-slate-500">Jump straight to the control panel to execute a batch or monitor live telemetry.</p>
                 </div>
                 <a href="/sync" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition-all whitespace-nowrap">
-                    Go to Sync Engine →
+                    Go to Sync Engine -&gt;
                 </a>
             </div>
 

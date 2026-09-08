@@ -1,4 +1,4 @@
-# Project M.I.R.A. — Comprehensive System Documentation & Technical Specification
+# Project M.I.R.A. - Comprehensive System Documentation & Technical Specification
 
 **Middleware for Integration and Real-time Automation**  
 *A High-Throughput, Schema-Resilient iPaaS Integration Middleware Connecting Monday.com and Xero*
@@ -210,12 +210,12 @@ Strict Pydantic v2 domain schemas enforce type safety, non-null guarantees, and 
 
 ### 4.5 Dual Framework Architecture: FastAPI & Flask
 To ensure maximum operational flexibility across both modern asynchronous microservice environments and established multi-page web infrastructures, Project M.I.R.A. provides dual operational entrypoints:
-1. **Primary Microservice API (`main.py` — FastAPI v2.0.4):**
+1. **Primary Microservice API (`main.py` - FastAPI v2.0.4):**
    - High-throughput asynchronous routing.
    - Modular APIRouters (`routes/auth_routes.py`, `routes/admin_routes.py`, `routes/connectors_routes.py`, `routes/mappings_routes.py`, `routes/sync_routes.py`).
    - OpenAPI / Swagger auto-generated interactive documentation (`/docs`, `/redoc`).
    - Background tasks support for asynchronous transaction pushes.
-2. **Complementary Orchestrator (`app.py` — Flask):**
+2. **Complementary Orchestrator (`app.py` - Flask):**
    - Traditional WSGI multi-page rendering and session handling.
    - Synchronous webhook endpoint (`/webhook/monday`) designed for testing and offline simulations.
    - Server-Sent Events (SSE) streaming (`/api/sync/stream`).
