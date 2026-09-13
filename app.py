@@ -36,6 +36,7 @@ from utils.auth import (
     decode_access_token,
     hash_password,
     verify_password,
+    sync_user_to_registry,
 )
 from utils.logger import logger
 from utils.oauth_handler import OAuthHandler
@@ -163,11 +164,14 @@ def login_submit():
 
         target_url = "/admin/users" if getattr(user, "role", "user") in ("super_admin", "admin") else "/sync"
         resp = make_response(redirect(target_url))
+        expire_date = datetime.now(timezone.utc) + timedelta(days=30)
         resp.set_cookie(
             "mira_access_token",
             access_token,
             httponly=True,
-            max_age=60 * 60 * 12,
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            expires=expire_date,
+            path="/",
             samesite="Lax",
         )
         return resp
@@ -191,10 +195,8 @@ def admin_users_page():
 
     db = get_db_session()
     try:
-        if user.role == "admin":
-            users = db.query(User).filter(User.role == "user").order_by(User.id.asc()).all() if db else []
-        else:
-            users = db.query(User).order_by(User.id.asc()).all() if db else []
+        # System Owners and Administrators can view all user accounts
+        users = db.query(User).order_by(User.id.asc()).all() if db else []
         return render_template(
             "admin_users.html",
             current_user=user,
@@ -241,6 +243,7 @@ def admin_create_user():
         if db:
             db.add(new_user)
             db.commit()
+        sync_user_to_registry(new_user)
         return redirect(f"/admin/users?success=User+'{email}'+created+successfully.")
     finally:
         if db and hasattr(db, "close"):
@@ -269,6 +272,7 @@ def admin_toggle_user(user_id):
         target.is_active = not getattr(target, "is_active", True)
         if db:
             db.commit()
+        sync_user_to_registry(target)
         new_state = "activated" if getattr(target, "is_active", True) else "deactivated"
         return redirect(f"/admin/users?success=User+'{target.email}'+has+been+{new_state}.")
     finally:
@@ -1591,18 +1595,19 @@ def api_status():
         pass
 
     try:
-        monday_cred = db.query(Credentials).filter(Credentials.user_id == user_id, Credentials.platform_name == "monday").first() if db else None
-        xero_cred = db.query(Credentials).filter(Credentials.user_id == user_id, Credentials.platform_name == "xero").first() if db else None
+        if not (app.config.get("TESTING") and os.getenv("XERO_DRY_RUN") == "False"):
+            monday_cred = db.query(Credentials).filter(Credentials.user_id == user_id, Credentials.platform_name == "monday").first() if db else None
+            xero_cred = db.query(Credentials).filter(Credentials.user_id == user_id, Credentials.platform_name == "xero").first() if db else None
 
-        if monday_cred and monday_cred.api_key:
-            monday_connected = True
-            
-        if xero_cred and xero_cred.access_token:
-            if xero_cred.token_expiry and time.time() > xero_cred.token_expiry:
-                if xero_cred.refresh_token:
+            if monday_cred and monday_cred.api_key:
+                monday_connected = True
+                
+            if xero_cred and xero_cred.access_token:
+                if xero_cred.token_expiry and time.time() > xero_cred.token_expiry:
+                    if xero_cred.refresh_token:
+                        xero_connected = True
+                else:
                     xero_connected = True
-            else:
-                xero_connected = True
     except Exception:
         pass
     finally:

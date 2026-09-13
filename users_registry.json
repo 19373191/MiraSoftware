@@ -1,0 +1,42 @@
+[
+    {
+        "id": 1,
+        "email": "admin@mira.com",
+        "hashed_password": "pbkdf2:sha256:81vWAkF6tltaVhDmn1rxdw==:74tDiKRaxi2gf/LIE0dueERTFmaO+YIcO+t0rQzEc7o=",
+        "role": "super_admin",
+        "is_active": true,
+        "created_at": "2026-07-27 17:53:33.906278"
+    },
+    {
+        "id": 2,
+        "email": "admin@mira.local",
+        "hashed_password": "pbkdf2:sha256:3wteKJOZDqGGq/BkorlcIw==:KESXvyaqqKWHItnJ4V1m2Y9F/6pAGfZgQHRfueBQsUs=",
+        "role": "admin",
+        "is_active": true,
+        "created_at": "2026-07-27 17:53:33.956967"
+    },
+    {
+        "id": 3,
+        "email": "test@mira.com",
+        "hashed_password": "pbkdf2:sha256:vJfS0xye0Nq2Qajy0nGIBA==:jWTAp+ao0ipoNxM0eXuL5qZ2wYeg9hDqf1+i9rZaFr0=",
+        "role": "user",
+        "is_active": true,
+        "created_at": "2026-08-29 20:51:53.806627"
+    },
+    {
+        "id": 4,
+        "email": "ashish@mira.com",
+        "hashed_password": "pbkdf2:sha256:8Lth3HIqbXtS9R3J5PPhcQ==:orEFMbUn77rYi3XYWZDa5vlG//W3a6YNhypgGA6dipo=",
+        "role": "admin",
+        "is_active": true,
+        "created_at": "2026-08-29 20:52:07.742587"
+    },
+    {
+        "id": 5,
+        "email": "test2@mira.com",
+        "hashed_password": "pbkdf2:sha256:d+3PAW1yz3BMtsiCzJl4GA==:tL0n7PHQumIftIzRfn/Ss/wVwSVyf2yh4BM16hgenQA=",
+        "role": "user",
+        "is_active": true,
+        "created_at": "2026-08-29 21:00:09.643073"
+    }
+]

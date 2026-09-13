@@ -38,7 +38,7 @@ from utils.logger import logger
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "mira_enterprise_secret_key_2026_change_in_prod")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 12  # 12 hours
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 30  # 30 days persistent authentication
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login", auto_error=False)
 
@@ -206,3 +206,54 @@ def require_role(allowed_roles: Union[str, List[str]]):
 require_super_admin = require_role(["super_admin"])
 require_admin_or_higher = require_role(["super_admin", "admin"])
 require_active_user = require_role(["super_admin", "admin", "user"])
+
+
+def sync_user_to_registry(user: Any) -> None:
+    """Synchronizes newly created or modified user records to users_registry.json and mock_db.json."""
+    try:
+        registry_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "users_registry.json")
+        registry = []
+        if os.path.exists(registry_path):
+            with open(registry_path, "r", encoding="utf-8") as f:
+                registry = json.load(f)
+
+        found = False
+        user_email = getattr(user, "email", None)
+        if not user_email:
+            return
+
+        for idx, item in enumerate(registry):
+            if item.get("email") == user_email:
+                registry[idx]["role"] = getattr(user, "role", "user")
+                registry[idx]["is_active"] = getattr(user, "is_active", True)
+                if getattr(user, "hashed_password", None):
+                    registry[idx]["hashed_password"] = user.hashed_password
+                found = True
+                break
+
+        if not found:
+            created_at_val = getattr(user, "created_at", None)
+            created_at_str = created_at_val.isoformat() if hasattr(created_at_val, "isoformat") else str(created_at_val or datetime.now(timezone.utc).isoformat())
+            registry.append({
+                "id": getattr(user, "id", None) or (len(registry) + 1),
+                "email": user_email,
+                "hashed_password": getattr(user, "hashed_password", ""),
+                "role": getattr(user, "role", "user"),
+                "is_active": getattr(user, "is_active", True),
+                "created_at": created_at_str,
+            })
+
+        with open(registry_path, "w", encoding="utf-8") as f:
+            json.dump(registry, f, indent=4)
+
+        # Also sync to mock_db.json
+        mock_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mock_db.json")
+        if os.path.exists(mock_path):
+            with open(mock_path, "r", encoding="utf-8") as f:
+                mock_data = json.load(f)
+            mock_data["users"] = registry
+            with open(mock_path, "w", encoding="utf-8") as f:
+                json.dump(mock_data, f, indent=4)
+    except Exception as err:
+        logger.warning("Could not sync user to registry: %s", err)
+

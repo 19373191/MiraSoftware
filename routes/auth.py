@@ -1,7 +1,9 @@
 """
 M.I.R.A. Authentication & Super-Admin Seeding Router.
 """
-
+import json
+import os
+from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 
 try:
@@ -50,25 +52,50 @@ templates = Jinja2Templates(directory="templates")
 
 def seed_super_admin(db: Session) -> None:
     """
-    Seeds initial super-admin account (admin@mira.com / Admin123!) if not present.
+    Seeds initial super-admin accounts and restores all accounts from users_registry.json.
+    Ensures accounts are never deleted or lost upon application restart or container cold-start.
     """
-    admin_emails = ["admin@mira.com", "admin@mira.local"]
     try:
-        for email_addr in admin_emails:
+        # 1. Ensure core system accounts exist
+        core_accounts = [
+            ("admin@mira.com", "Admin123!", "super_admin", True),
+            ("admin@mira.local", "AdminPass123!", "admin", True),
+        ]
+        for email_addr, pwd, role, is_active in core_accounts:
             existing = db.query(User).filter(User.email == email_addr).first() if db else None
             if not existing and db:
-                pwd = "Admin123!" if email_addr == "admin@mira.com" else "AdminPass123!"
                 admin_user = User(
                     email=email_addr,
                     hashed_password=hash_password(pwd),
-                    role="super_admin" if email_addr == "admin@mira.com" else "admin",
-                    is_active=True,
+                    role=role,
+                    is_active=is_active,
                 )
                 db.add(admin_user)
                 db.commit()
-                logger.info("Successfully seeded super-admin account: %s", email_addr)
+                logger.info("Successfully seeded core system account: %s", email_addr)
+
+        # 2. Restore all registered users from users_registry.json
+        registry_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "users_registry.json")
+        if os.path.exists(registry_path) and db:
+            with open(registry_path, "r", encoding="utf-8") as f:
+                registry = json.load(f)
+            for item in registry:
+                u_email = item.get("email")
+                if not u_email:
+                    continue
+                user_record = db.query(User).filter(User.email == u_email).first()
+                if not user_record:
+                    reg_user = User(
+                        email=u_email,
+                        hashed_password=item.get("hashed_password") or hash_password("Password123!"),
+                        role=item.get("role", "user"),
+                        is_active=item.get("is_active", True),
+                    )
+                    db.add(reg_user)
+                    db.commit()
+                    logger.info("Restored registered user from registry: %s (%s)", u_email, item.get("role"))
     except Exception as e:
-        logger.warning("Could not seed super-admin: %s", e)
+        logger.warning("Could not seed users: %s", e)
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -121,13 +148,16 @@ async def login_submit(
     target_url = "/admin/users" if user.role in ("super_admin", "admin") else "/sync"
     response = RedirectResponse(url=target_url, status_code=status.HTTP_303_SEE_OTHER)
 
-    # Set HTTP-Only Cookie
+    # Set HTTP-Only Cookie with 30-day persistent expiration across tab closures
     if hasattr(response, "set_cookie"):
+        expire_date = datetime.now(timezone.utc) + timedelta(days=30)
         response.set_cookie(
             key="mira_access_token",
             value=access_token,
             httponly=True,
-            max_age=60 * 60 * 12,  # 12 hours
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            expires=int(expire_date.timestamp()),
+            path="/",
             samesite="lax",
         )
     logger.info("User '%s' logged in successfully. Redirecting to %s", user.email, target_url)

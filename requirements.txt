@@ -11,3 +11,4 @@ faker>=19.0.0
 pyjwt>=2.8.0
 python-multipart>=0.0.9
 psycopg2-binary>=2.9.9
+flask>=3.0.0

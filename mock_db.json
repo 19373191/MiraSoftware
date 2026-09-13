@@ -1,0 +1,244 @@
+{
+    "credentials": [
+        {
+            "user_id": 1,
+            "platform_name": "monday",
+            "api_key": "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY4NzE4NTY1NywiYWFpIjoxMSwidWlkIjoxMTE2NjgwOTksImlhZCI6IjIwMjYtMDctMjhUMDk6NDE6NDEuMDAwWiIsInBlciI6Im1lOndyaXRlIiwiYWN0aWQiOjM2MjQyNjIxLCJyZ24iOiJldWMxIn0.3urXwzGpOoz4mb9FAQ51bDh2tstdccSzO9mSxbO8Jk0",
+            "board_id": "5101138223",
+            "id": 1
+        },
+        {
+            "id": 2,
+            "user_id": 1,
+            "platform_name": "xero",
+            "access_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFDQUY4RTY2NzcyRDZEQzAyOEQ2NzI2RkQwMjYxNTgxNTcwRUZDMTkiLCJ4NXQiOiJISy1PWm5jdGJjQW8xbkp2MENZVmdWY09fQmsiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2lkZW50aXR5Lnhlcm8uY29tIiwibmJmIjoxNzg4NjIwOTQ5LCJpYXQiOjE3ODg2MjA5NDksImV4cCI6MTc4ODYyMjc0OSwiYXVkIjoiaHR0cHM6Ly9pZGVudGl0eS54ZXJvLmNvbS9yZXNvdXJjZXMiLCJzY29wZSI6WyJhY2NvdW50aW5nLmludm9pY2VzIiwiYWNjb3VudGluZy5jb250YWN0cyIsImFjY291bnRpbmcuc2V0dGluZ3MiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsibGVnYWN5Il0sImNsaWVudF9pZCI6IjlDOUY1MkFGRTc2RjRGM0RBQkIzMkM5MzNGQTlFRjAyIiwic3ViIjoiYjhlM2U3MWZmYWIwNWM5YmExZjNkZWE5YjdjNzc4OTUiLCJhdXRoX3RpbWUiOjE3ODg2MjA4MjYsInhlcm9fdXNlcmlkIjoiMTJlODI2ZmItNWFkZC00Njc2LWEzMjMtOWY2YmNmYTRjMDQ3IiwiZ2xvYmFsX3Nlc3Npb25faWQiOiJjMTY2NTA0MTk3NGU0Njc3YWRiYTIyOTUzNDgzZDE5MyIsInNpZCI6ImMxNjY1MDQxOTc0ZTQ2NzdhZGJhMjI5NTM0ODNkMTkzIiwiYXV0aGVudGljYXRpb25fZXZlbnRfaWQiOiJkMWE1ZTdlYy02YzllLTQ3YzYtYWY4Yi00N2JmM2E3NTc3ZDgiLCJqdGkiOiJBQjBEODMzMEM0MkQ3NkQ5NzU5MTFCN0Y2RDM0QzQ1RSJ9.ts3RtjiQjmJNVc74zrgAl-gsdVIFK4zHHni2gJ18Q_3EMh7kXOs0msQ2quuXGkCW5y9SFmXm8yEdIgipUKHyN1F4-KbqCHuuoatrsxK8oqGkPiM1k88b3uY3-M4LZB_DSP69RE-yej2B8CDhJadt8jPKxC79Dz9NkQo2OfgwSPJhG2GaH9Qj0Ex-_tlfM1ZjyXyamLeRCTBlk4M7PAlBLyh2O0nfy2Vh0M_89DKO74kGHw7qrhuDkd7gTEmW28FCT8lP_Uh-72Ges1UCFsAkEoyjEsfTp8DjHsIGSNJKwM17WC3J79nVvvGu4C8BRAH23lLArzn1Z0PQjfId4Zy-UA",
+            "refresh_token": "Efn0d3O9_Qby2EE5Klyr1m90xQmqt7QgJ1D5rYIl1G8",
+            "token_expiry": 1788622749.9127114
+        }
+    ],
+    "users": [
+        {
+            "id": 1,
+            "email": "admin@mira.com",
+            "hashed_password": "pbkdf2:sha256:81vWAkF6tltaVhDmn1rxdw==:74tDiKRaxi2gf/LIE0dueERTFmaO+YIcO+t0rQzEc7o=",
+            "role": "super_admin",
+            "is_active": true,
+            "created_at": "2026-07-27 17:53:33.906278"
+        },
+        {
+            "id": 2,
+            "email": "admin@mira.local",
+            "hashed_password": "pbkdf2:sha256:3wteKJOZDqGGq/BkorlcIw==:KESXvyaqqKWHItnJ4V1m2Y9F/6pAGfZgQHRfueBQsUs=",
+            "role": "admin",
+            "is_active": true,
+            "created_at": "2026-07-27 17:53:33.956967"
+        },
+        {
+            "id": 3,
+            "email": "test@mira.com",
+            "hashed_password": "pbkdf2:sha256:vJfS0xye0Nq2Qajy0nGIBA==:jWTAp+ao0ipoNxM0eXuL5qZ2wYeg9hDqf1+i9rZaFr0=",
+            "role": "user",
+            "is_active": true,
+            "created_at": "2026-08-29 20:51:53.806627"
+        },
+        {
+            "id": 4,
+            "email": "ashish@mira.com",
+            "hashed_password": "pbkdf2:sha256:8Lth3HIqbXtS9R3J5PPhcQ==:orEFMbUn77rYi3XYWZDa5vlG//W3a6YNhypgGA6dipo=",
+            "role": "admin",
+            "is_active": true,
+            "created_at": "2026-08-29 20:52:07.742587"
+        },
+        {
+            "id": 5,
+            "email": "test2@mira.com",
+            "hashed_password": "pbkdf2:sha256:d+3PAW1yz3BMtsiCzJl4GA==:tL0n7PHQumIftIzRfn/Ss/wVwSVyf2yh4BM16hgenQA=",
+            "role": "user",
+            "is_active": true,
+            "created_at": "2026-08-29 21:00:09.643073"
+        }
+    ],
+    "field_mappings": [
+        {
+            "user_id": 1,
+            "source_column": "transaction_id",
+            "target_xero_path": "Invoice.Reference",
+            "custom_override_path": "TX-{transaction_id}",
+            "mapping_version": "v2.0.4",
+            "board_id": "default",
+            "id": 1
+        },
+        {
+            "user_id": 1,
+            "source_column": "company_name",
+            "target_xero_path": "Invoice.Contact.Name",
+            "custom_override_path": "Contact.Name",
+            "mapping_version": "v2.0.4",
+            "board_id": "default",
+            "id": 2
+        },
+        {
+            "user_id": 1,
+            "source_column": "customer_first_name",
+            "target_xero_path": "Invoice.Contact.FirstName",
+            "custom_override_path": "Contact.FirstName",
+            "mapping_version": "v2.0.4",
+            "board_id": "default",
+            "id": 3
+        },
+        {
+            "user_id": 1,
+            "source_column": "customer_last_name",
+            "target_xero_path": "Invoice.Contact.LastName",
+            "custom_override_path": "Contact.LastName",
+            "mapping_version": "v2.0.4",
+            "board_id": "default",
+            "id": 4
+        },
+        {
+            "user_id": 1,
+            "source_column": "email_address",
+            "target_xero_path": "Invoice.Contact.EmailAddress",
+            "custom_override_path": "Contact.EmailAddress",
+            "mapping_version": "v2.0.4",
+            "board_id": "default",
+            "id": 5
+        },
+        {
+            "user_id": 1,
+            "source_column": "item_description",
+            "target_xero_path": "Invoice.LineItems[0].Description",
+            "custom_override_path": "LineItems.Description",
+            "mapping_version": "v2.0.4",
+            "board_id": "default",
+            "id": 6
+        },
+        {
+            "user_id": 1,
+            "source_column": "quantity",
+            "target_xero_path": "Invoice.LineItems[0].Quantity",
+            "custom_override_path": "LineItems.Quantity",
+            "mapping_version": "v2.0.4",
+            "board_id": "default",
+            "id": 7
+        },
+        {
+            "user_id": 1,
+            "source_column": "unit_price",
+            "target_xero_path": "Invoice.LineItems[0].UnitAmount",
+            "custom_override_path": "LineItems.UnitAmount",
+            "mapping_version": "v2.0.4",
+            "board_id": "default",
+            "id": 8
+        },
+        {
+            "user_id": 1,
+            "board_id": "5101138223",
+            "target_xero_path": "Invoice.Contact.Name",
+            "source_column": "name",
+            "custom_override_path": null,
+            "mapping_version": "v2.0.4",
+            "id": 9
+        },
+        {
+            "user_id": 1,
+            "board_id": "5101138223",
+            "target_xero_path": "Invoice.Contact.EmailAddress",
+            "source_column": "email_mm5w89d8",
+            "custom_override_path": null,
+            "mapping_version": "v2.0.4",
+            "id": 10
+        },
+        {
+            "user_id": 1,
+            "board_id": "5101138223",
+            "target_xero_path": "Invoice.Contact.AccountNumber",
+            "source_column": "text_mm663vnh",
+            "custom_override_path": null,
+            "mapping_version": "v2.0.4",
+            "id": 11
+        },
+        {
+            "user_id": 1,
+            "board_id": "5101138223",
+            "target_xero_path": "Invoice.Contact.FirstName",
+            "source_column": "text_mm66sr6t",
+            "custom_override_path": null,
+            "mapping_version": "v2.0.4",
+            "id": 12
+        },
+        {
+            "user_id": 1,
+            "board_id": "5101138223",
+            "target_xero_path": "Invoice.Contact.LastName",
+            "source_column": "text_mm668mv4",
+            "custom_override_path": null,
+            "mapping_version": "v2.0.4",
+            "id": 13
+        },
+        {
+            "user_id": 1,
+            "board_id": "5101138223",
+            "target_xero_path": "Invoice.Contact.Phone",
+            "source_column": "text_mm66cg69",
+            "custom_override_path": null,
+            "mapping_version": "v2.0.4",
+            "id": 14
+        },
+        {
+            "user_id": 1,
+            "board_id": "5101138223",
+            "target_xero_path": "Invoice.Contact.Address",
+            "source_column": "text_mm5wwdh",
+            "custom_override_path": null,
+            "mapping_version": "v2.0.4",
+            "id": 15
+        },
+        {
+            "user_id": 1,
+            "board_id": "5101138223",
+            "target_xero_path": "Invoice.Contact.ContactID",
+            "source_column": "text_mm66zhdw",
+            "custom_override_path": null,
+            "mapping_version": "v2.0.4",
+            "id": 16
+        }
+    ],
+    "sync_logs": [
+        {
+            "timestamp": "2026-08-03T22:09:12.943078+00:00",
+            "status": "SUCCESS",
+            "payload_count": 100,
+            "error_details": "Processed 100 payloads (15 invoices) in 1.703s. Median latency: 0.3203 ms.",
+            "id": 1
+        },
+        {
+            "timestamp": "2026-08-03T22:11:34.522331+00:00",
+            "status": "SUCCESS",
+            "payload_count": 100,
+            "error_details": "Processed 100 payloads (15 invoices) in 1.45s. Median latency: 0.23 ms.",
+            "id": 2
+        },
+        {
+            "timestamp": "2026-08-03T22:11:55.395766+00:00",
+            "status": "SUCCESS",
+            "payload_count": 100,
+            "error_details": "Processed 100 payloads (15 invoices) in 0.464s. Median latency: 0.486 ms.",
+            "id": 3
+        },
+        {
+            "timestamp": "2026-08-03T22:20:59.095266+00:00",
+            "status": "SUCCESS",
+            "payload_count": 5,
+            "error_details": "[Simulated] Xero to Monday sync complete. Synced 5 contacts to target boards: default.",
+            "id": 4
+        },
+        {
+            "timestamp": "2026-08-03T22:24:03.820812+00:00",
+            "status": "SUCCESS",
+            "payload_count": 5,
+            "error_details": "[Simulated] Xero to Monday sync complete. Synced 5 contacts to target boards: default.",
+            "id": 5
+        }
+    ]
+}

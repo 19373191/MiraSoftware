@@ -14,12 +14,8 @@ __pycache__/
 .env
 *.local
 
-# Local SQLite databases & test databases
-mira.db
-mock_db.json
+# Test database
 mock_db_test.json
-*.db
-*.sqlite3
 
 # OS generated files
 Thumbs.db

@@ -278,16 +278,24 @@ class MockDBSession:
             self.data[table_name] = []
 
         if table_name == "users" and not self.data["users"]:
-            from utils.auth import hash_password
-            admin_dict = {
-                "id": 1,
-                "email": "admin@mira.com",
-                "hashed_password": hash_password("Admin123!"),
-                "role": "admin",
-                "is_active": True,
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }
-            self.data["users"].append(admin_dict)
+            registry_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "users_registry.json")
+            if os.path.exists(registry_path):
+                try:
+                    with open(registry_path, "r", encoding="utf-8") as f:
+                        self.data["users"] = json.load(f)
+                except Exception:
+                    pass
+            if not self.data["users"]:
+                from utils.auth import hash_password
+                admin_dict = {
+                    "id": 1,
+                    "email": "admin@mira.com",
+                    "hashed_password": hash_password("Admin123!"),
+                    "role": "super_admin",
+                    "is_active": True,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                self.data["users"].append(admin_dict)
             self._save_data()
 
         instances = []

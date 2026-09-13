@@ -4,7 +4,8 @@ M.I.R.A. Admin User Management Router.
 Enforces Role-Based Access Control (RBAC) allowing only 'admin' role users to view,
 create, and toggle status for platform accounts.
 """
-
+import json
+import os
 from typing import Any, Optional
 
 try:
@@ -38,7 +39,7 @@ try:
 except ImportError:
     Session = Any
 from models.db import User, get_db
-from utils.auth import get_current_user, hash_password, require_role, require_admin_or_higher
+from utils.auth import get_current_user, hash_password, require_role, require_admin_or_higher, sync_user_to_registry
 from utils.logger import logger
 
 router = APIRouter(prefix="/admin", tags=["Admin User Management"])
@@ -66,10 +67,8 @@ async def admin_list_users(
     Displays the user management console displaying all registered platform users.
     Restricted strictly to users with admin or super_admin roles.
     """
-    if current_user.role == "admin":
-        users = db.query(User).filter(User.role == "user").order_by(User.id.asc()).all() if db else []
-    else:
-        users = db.query(User).order_by(User.id.asc()).all() if db else []
+    # System Owners and Administrators can view all user accounts
+    users = db.query(User).order_by(User.id.asc()).all() if db else []
     return templates.TemplateResponse(
         request,
         "admin_users.html",
@@ -130,6 +129,7 @@ async def admin_create_user(
         db.add(new_user)
         db.commit()
 
+    sync_user_to_registry(new_user)
     logger.info("Admin '%s' created new user '%s' with role '%s'", getattr(current_user, "email", "admin"), clean_email, role_val)
     return RedirectResponse(
         url=f"/admin/users?success=User+'{clean_email}'+created+successfully.",
@@ -175,6 +175,7 @@ async def admin_toggle_user_active(
     if db:
         db.commit()
 
+    sync_user_to_registry(target_user)
     new_state = "activated" if target_user.is_active else "deactivated"
     logger.info("Admin '%s' %s user account '%s'", getattr(current_user, "email", "admin"), new_state, target_user.email)
 

@@ -129,6 +129,45 @@ class TestAuthAdminConnectors(unittest.TestCase):
         normalized = test_url.replace("postgres://", "postgresql://", 1) if test_url.startswith("postgres://") else test_url
         self.assertEqual(normalized, "postgresql://user:password@hostname:5432/dbname")
 
+    def test_all_user_roles_visible_in_admin_query(self):
+        """Verifies that super_admin, admin, and operator accounts are all retrieved for the admin table."""
+        seed_super_admin(self.db)
+        all_users = self.db.query(User).order_by(User.id.asc()).all()
+        roles = {u.role for u in all_users}
+        self.assertIn("super_admin", roles)
+        self.assertIn("admin", roles)
+        # Verify no user is omitted from the table view
+        emails = [u.email for u in all_users]
+        self.assertIn("admin@mira.com", emails)
+        self.assertIn("admin@mira.local", emails)
+
+    def test_session_token_and_cookie_duration(self):
+        """Verifies that authentication token lifespan is 30 days (43,200 minutes) for permanent persistence."""
+        from utils.auth import ACCESS_TOKEN_EXPIRE_MINUTES
+        self.assertEqual(ACCESS_TOKEN_EXPIRE_MINUTES, 60 * 24 * 30)
+
+    def test_user_registry_sync_and_persistence(self):
+        """Verifies that newly registered users are synced and retained."""
+        from utils.auth import sync_user_to_registry
+        test_user = User(
+            id=999,
+            email="persistence_test@mira.com",
+            hashed_password=hash_password("Pass123!"),
+            role="user",
+            is_active=True,
+        )
+        sync_user_to_registry(test_user)
+        import json, os
+        reg_path = "users_registry.json"
+        self.assertTrue(os.path.exists(reg_path))
+        with open(reg_path, "r", encoding="utf-8") as f:
+            reg_data = json.load(f)
+        self.assertTrue(any(u["email"] == "persistence_test@mira.com" for u in reg_data))
+        # Cleanup test user
+        reg_data = [u for u in reg_data if u["email"] != "persistence_test@mira.com"]
+        with open(reg_path, "w", encoding="utf-8") as f:
+            json.dump(reg_data, f, indent=4)
+
 
 if __name__ == "__main__":
     unittest.main()
