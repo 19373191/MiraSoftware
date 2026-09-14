@@ -207,13 +207,18 @@ DEFAULT_INVOICE_MAPPINGS = [
         "custom_override_path": "",
     },
     {
-        "source_column": "numeric_mm6631e9",
+        "source_column": "numeric_mm66h8ce",
         "target_xero_path": "Invoice.Total",
         "custom_override_path": "",
     },
     {
-        "source_column": "delivery_address",
+        "source_column": "text_mm66zpe0",
         "target_xero_path": "Invoice.Contact.Address",
+        "custom_override_path": "",
+    },
+    {
+        "source_column": "board_relation_mm67qge0",
+        "target_xero_path": "Invoice.Contact.Name",
         "custom_override_path": "",
     },
     # Subitems mappings

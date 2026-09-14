@@ -45,7 +45,7 @@ from engine.transformer import DataTransformer
 import config_manager
 from auth_manager import XeroAuthorisationManager, XeroAuthorisationError
 from transaction_sync import XeroSyncError
-from routes.sync import parse_xero_date, generate_mock_payloads
+from routes.sync import parse_xero_date, generate_mock_payloads, extract_invoice_delivery_address
 
 MONDAY_WEBHOOK_TOKEN = "mock_webhook_token_for_testing"
 
@@ -1135,6 +1135,15 @@ def sync_stream():
             yield f"data: {json.dumps({'percent': 18, 'log': f' Retrieved {total_contacts} contacts from Xero after filtering.', 'status': 'IN_PROGRESS'})}\n\n"
             time.sleep(0.1)
 
+            customer_contact_map = {}
+            for c in contacts:
+                c_name_k = str(c.get("Name", "")).strip().lower()
+                c_email_k = str(c.get("EmailAddress", "")).strip().lower()
+                if c_name_k:
+                    customer_contact_map[c_name_k] = c
+                if c_email_k:
+                    customer_contact_map[c_email_k] = c
+
             contacts_to_sync = contacts[:min(batch_count, total_contacts)]
             synced_count = 0
             failed_count = 0
@@ -1289,10 +1298,12 @@ def sync_stream():
             target_board_2 = inv_mapping.board_id if inv_mapping else "5101138242"
             
             col_types_b2 = {}
+            b2_columns_dict = {}
             if monday_conn:
                 try:
                     cols = monday_conn.query_board_columns(target_board_2)
                     col_types_b2 = {c["id"]: c["type"] for c in cols if "id" in c and "type" in c}
+                    b2_columns_dict = {c["id"]: c for c in cols if "id" in c}
                 except Exception as e:
                     logger.warning("Could not query board 2 columns: %s", e)
             
@@ -1396,9 +1407,37 @@ def sync_stream():
                         parent_column_values[date_col] = inv_date.strftime("%Y-%m-%d")
                         
                     # Total Amount
-                    total_col = mappings_invoice.get("Invoice.Total") or "numeric_mm66h8ce"
-                    parent_column_values[total_col] = float(inv.get("Total", 0.0))
+                    total_col = mappings_invoice.get("Invoice.Total")
+                    if not total_col or (b2_columns_dict and total_col not in b2_columns_dict) or total_col == "numeric_mm6631e9":
+                        for cid, cinfo in b2_columns_dict.items():
+                            ctitle = str(cinfo.get("title", "")).lower()
+                            if "total" in ctitle or "amount" in ctitle:
+                                total_col = cid
+                                break
+                    if not total_col:
+                        total_col = "numeric_mm66h8ce"
+                    parent_column_values[total_col] = float(inv.get("Total") or inv.get("AmountDue") or 0.0)
                     
+                    # Delivery Address
+                    addr_col = (
+                        mappings_invoice.get("Invoice.Contact.Address")
+                        or mappings_invoice.get("Invoice.DeliveryAddress")
+                        or mappings_invoice.get("Invoice.Address")
+                    )
+                    if not addr_col or (b2_columns_dict and addr_col not in b2_columns_dict) or addr_col == "delivery_address":
+                        for cid, cinfo in b2_columns_dict.items():
+                            ctitle = str(cinfo.get("title", "")).lower()
+                            if "delivery" in ctitle or "address" in ctitle:
+                                addr_col = cid
+                                break
+                    if not addr_col:
+                        addr_col = "text_mm66zpe0"
+                    
+                    contact_fallback = customer_contact_map.get(c_name) or customer_contact_map.get(c_email)
+                    delivery_addr = extract_invoice_delivery_address(inv, contact_fallback=contact_fallback)
+                    if delivery_addr:
+                        parent_column_values[addr_col] = delivery_addr
+
                     # Customer Connect Boards column
                     cust_connect_col = mappings_invoice.get("Invoice.Contact.Name") or "board_relation_mm67qge0"
                     if customer_monday_id:

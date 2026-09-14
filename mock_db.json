@@ -60,10 +60,10 @@
         {
             "id": 999,
             "email": "persistence_test@mira.com",
-            "hashed_password": "pbkdf2:sha256:MMqhccWoIPBi+Z8xWg79UA==:zlwk4UTeQ8XK+m2Q/4qDM5kEOTh7sf/Cs83WzM+iz0U=",
+            "hashed_password": "pbkdf2:sha256:jSx+HcLCjVQUnjKzIB2Bow==:KOD7/TCFkwNXIATCg4u8ykWq5Oe/0THUswbnk46irXs=",
             "role": "user",
             "is_active": true,
-            "created_at": "2026-09-14T02:33:09.885083+00:00"
+            "created_at": "2026-09-14T03:07:06.354024+00:00"
         }
     ],
     "field_mappings": [
