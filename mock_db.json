@@ -56,6 +56,14 @@
             "role": "user",
             "is_active": true,
             "created_at": "2026-08-29 21:00:09.643073"
+        },
+        {
+            "id": 999,
+            "email": "persistence_test@mira.com",
+            "hashed_password": "pbkdf2:sha256:MMqhccWoIPBi+Z8xWg79UA==:zlwk4UTeQ8XK+m2Q/4qDM5kEOTh7sf/Cs83WzM+iz0U=",
+            "role": "user",
+            "is_active": true,
+            "created_at": "2026-09-14T02:33:09.885083+00:00"
         }
     ],
     "field_mappings": [

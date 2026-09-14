@@ -4,6 +4,7 @@ M.I.R.A. Xero Integration Connector.
 Handles API communication with Xero REST API for Contacts, Items, and Invoices.
 """
 
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 import requests
 
@@ -11,6 +12,17 @@ from config import settings
 from models.schemas import Contact, Product, Invoice
 from utils.logger import logger
 from utils.oauth_handler import OAuthHandler
+
+
+def _format_modified_date(dt: Optional[datetime]) -> Optional[str]:
+    """Formats datetime into RFC 2822 HTTP format for Xero If-Modified-Since header."""
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    return dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
 
 
 class XeroConnector:
@@ -130,8 +142,13 @@ class XeroConnector:
     def create_contact(self, contact_data: Union[Contact, Dict[str, Any]]) -> Dict[str, Any]:
         return self.create_or_update_contact(contact_data)
 
-    def get_invoices(self, status: Optional[str] = None, page: Optional[int] = None) -> List[Dict[str, Any]]:
-        """Retrieves list of invoices from Xero."""
+    def get_invoices(
+        self,
+        status: Optional[str] = None,
+        page: Optional[int] = None,
+        if_modified_since: Optional[datetime] = None
+    ) -> List[Dict[str, Any]]:
+        """Retrieves list of invoices from Xero, optionally filtered by status, page, and updated date."""
         url = f"{self.base_url}/Invoices"
         params = {}
         if status:
@@ -140,26 +157,38 @@ class XeroConnector:
             params["page"] = page
 
         headers = self._get_headers()
+        mod_since_hdr = _format_modified_date(if_modified_since)
+        if mod_since_hdr:
+            headers["If-Modified-Since"] = mod_since_hdr
+
         logger.info("Fetching invoices from Xero...")
 
         response = requests.get(url, headers=headers, params=params, timeout=15)
         response.raise_for_status()
         return response.json().get("Invoices", [])
 
-    def get_contacts(self) -> List[Dict[str, Any]]:
-        """Retrieves list of contacts from Xero."""
+    def get_contacts(self, if_modified_since: Optional[datetime] = None) -> List[Dict[str, Any]]:
+        """Retrieves list of contacts from Xero, optionally filtered by updated date."""
         url = f"{self.base_url}/Contacts"
         headers = self._get_headers()
+        mod_since_hdr = _format_modified_date(if_modified_since)
+        if mod_since_hdr:
+            headers["If-Modified-Since"] = mod_since_hdr
+
         logger.info("Fetching contacts from Xero...")
 
         response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
         return response.json().get("Contacts", [])
 
-    def get_items(self) -> List[Dict[str, Any]]:
-        """Retrieves list of items/products from Xero."""
+    def get_items(self, if_modified_since: Optional[datetime] = None) -> List[Dict[str, Any]]:
+        """Retrieves list of items/products from Xero, optionally filtered by updated date."""
         url = f"{self.base_url}/Items"
         headers = self._get_headers()
+        mod_since_hdr = _format_modified_date(if_modified_since)
+        if mod_since_hdr:
+            headers["If-Modified-Since"] = mod_since_hdr
+
         logger.info("Fetching items from Xero...")
 
         response = requests.get(url, headers=headers, timeout=15)

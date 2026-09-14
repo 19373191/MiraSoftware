@@ -72,6 +72,7 @@ async def sync_control_panel(
     live processing terminal, and recent SyncLog database audits.
     """
     recent_logs = []
+    last_sync_time = None
     if db:
         try:
             recent_logs = (
@@ -80,6 +81,14 @@ async def sync_control_panel(
                 .limit(10)
                 .all()
             )
+            latest_success = (
+                db.query(SyncLog)
+                .filter(SyncLog.status.in_(["SUCCESS", "PARTIAL_SUCCESS"]))
+                .order_by(SyncLog.timestamp.desc())
+                .first()
+            )
+            if latest_success and latest_success.timestamp:
+                last_sync_time = latest_success.timestamp
         except Exception:
             recent_logs = []
 
@@ -89,6 +98,7 @@ async def sync_control_panel(
         {
             "current_user": current_user,
             "recent_logs": recent_logs,
+            "last_sync_time": last_sync_time,
             "error": error,
             "success": success,
         },
@@ -156,6 +166,7 @@ async def sync_live_stream(
     direction: str = "xero_to_monday",
     since_date: Optional[str] = None,
     board_id_1: Optional[str] = None,
+    board_id_2: Optional[str] = None,
     board_id_3: Optional[str] = None,
     batch_count: int = 500,
     group_by_company: bool = True,
@@ -416,6 +427,8 @@ async def sync_live_stream(
                 total_synced_records = len(contacts_to_sync) + total_items + total_invoices
                 latency = round((total_execution_time * 1000) / max(total_synced_records, 1), 2)
 
+                sim_log_id = None
+                sim_log_ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
                 if db:
                     try:
                         log_entry = SyncLog(
@@ -427,10 +440,13 @@ async def sync_live_stream(
                         )
                         db.add(log_entry)
                         db.commit()
+                        sim_log_id = log_entry.id
+                        if log_entry.timestamp:
+                            sim_log_ts = log_entry.timestamp.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
                         logger.warning("Could not persist SyncLog entry: %s", e)
 
-                yield f"data: {json.dumps({'percent': 100, 'log': f' [System Success] Sync execution complete! Synced {synced_count} customers, {synced_items_count} products, and {synced_invoices_count} invoices with 100.0% accuracy in {total_execution_time}s.', 'status': 'COMPLETED', 'summary': {'total': total_synced_records, 'exec_time': total_execution_time, 'latency_ms': latency, 'accuracy': accuracy}})}\n\n"
+                yield f"data: {json.dumps({'percent': 100, 'log': f' [System Success] Sync execution complete! Synced {synced_count} customers, {synced_items_count} products, and {synced_invoices_count} invoices with 100.0% accuracy in {total_execution_time}s.', 'status': 'COMPLETED', 'summary': {'total': total_synced_records, 'exec_time': total_execution_time, 'latency_ms': latency, 'accuracy': accuracy, 'timestamp': sim_log_ts, 'log_id': sim_log_id}})}\n\n"
                 return
 
 
@@ -510,7 +526,7 @@ async def sync_live_stream(
             monday_conn = MondayConnector(api_key=monday_api_key)
 
             try:
-                contacts = xero_conn.get_contacts()
+                contacts = xero_conn.get_contacts(if_modified_since=cutoff_time)
             except Exception as e:
                 yield f"data: {json.dumps({'percent': 0, 'log': f' Failed to fetch contacts from Xero: {e}', 'status': 'ERROR'})}\n\n"
                 return
@@ -583,7 +599,7 @@ async def sync_live_stream(
             time.sleep(0.1)
 
             try:
-                items = xero_conn.get_items()
+                items = xero_conn.get_items(if_modified_since=cutoff_time)
             except Exception as e:
                 yield f"data: {json.dumps({'percent': 60, 'log': f' Failed to fetch items from Xero: {e}', 'status': 'ERROR'})}\n\n"
                 return
@@ -642,7 +658,10 @@ async def sync_live_stream(
                 time.sleep(0.05)
 
             # Now sync Invoices (Xero -> Monday)
-            target_board_2 = "5101138242"
+            inv_mapping = db.query(FieldMapping).filter(FieldMapping.target_xero_path == "Invoice.InvoiceNumber").first() if db else None
+            default_inv_board = inv_mapping.board_id if inv_mapping else "5101138242"
+            target_board_2 = (board_id_2.strip() if board_id_2 and board_id_2.strip() else None) or default_inv_board
+
             yield f"data: {json.dumps({'percent': 90, 'log': ' Fetching invoices from Xero...', 'status': 'IN_PROGRESS'})}\n\n"
             time.sleep(0.1)
 
@@ -650,26 +669,30 @@ async def sync_live_stream(
                 invoices = []
                 p = 1
                 while len(invoices) < batch_count:
-                    chunk = xero_conn.get_invoices(page=p)
+                    chunk = xero_conn.get_invoices(page=p, if_modified_since=cutoff_time)
                     if not chunk:
                         break
-                    invoices.extend(chunk)
+                    if cutoff_time:
+                        filtered_chunk = [
+                            inv for inv in chunk
+                            if (parse_xero_date(inv.get("UpdatedDateUTC") or inv.get("DateString") or inv.get("Date")) is None
+                                or parse_xero_date(inv.get("UpdatedDateUTC") or inv.get("DateString") or inv.get("Date")) >= cutoff_time)
+                        ]
+                    else:
+                        filtered_chunk = chunk
+                    invoices.extend(filtered_chunk)
+                    if len(chunk) < 100:
+                        break
                     p += 1
             except Exception as e:
                 yield f"data: {json.dumps({'percent': 90, 'log': f' Failed to fetch invoices from Xero: {e}', 'status': 'ERROR'})}\n\n"
                 return
-
-            if cutoff_time:
-                invoices = [inv for inv in invoices if parse_xero_date(inv.get("UpdatedDateUTC")) is None or parse_xero_date(inv.get("UpdatedDateUTC")) >= cutoff_time]
 
             total_invoices = len(invoices)
             yield f"data: {json.dumps({'percent': 92, 'log': f' Retrieved {total_invoices} invoices from Xero.', 'status': 'IN_PROGRESS'})}\n\n"
             time.sleep(0.1)
 
             # Load invoice mappings
-            inv_mapping = db.query(FieldMapping).filter(FieldMapping.target_xero_path == "Invoice.InvoiceNumber").first() if db else None
-            target_board_2 = inv_mapping.board_id if inv_mapping else "5101138242"
-            
             col_types_b2 = {}
             if monday_conn:
                 try:
@@ -853,20 +876,26 @@ async def sync_live_stream(
             total_attempted = len(contacts_to_sync) + len(items_to_sync) + len(invoices_to_sync)
 
             # Record SyncLog entry
-            try:
-                log_entry = SyncLog(
-                    timestamp=datetime.now(timezone.utc),
-                    status="SUCCESS" if total_failed == 0 else "PARTIAL_SUCCESS",
-                    direction=direction,
-                    payload_count=total_attempted,
-                    error_details=f"Xero to Monday sync complete. Synced {synced_count} contacts to target boards: {', '.join(target_boards)}, {synced_items_count} products to board {target_board_3}, and {synced_invoices_count} invoices to board {target_board_2}.",
-                )
-                db.add(log_entry)
-                db.commit()
-            except Exception as e:
-                logger.warning("Could not persist SyncLog entry: %s", e)
+            log_id_val = None
+            log_ts_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            if db:
+                try:
+                    log_entry = SyncLog(
+                        timestamp=datetime.now(timezone.utc),
+                        status="SUCCESS" if total_failed == 0 else "PARTIAL_SUCCESS",
+                        direction=direction,
+                        payload_count=total_attempted,
+                        error_details=f"Xero to Monday sync complete. Synced {synced_count} contacts to target boards: {', '.join(target_boards)}, {synced_items_count} products to board {target_board_3}, and {synced_invoices_count} invoices to board {target_board_2}.",
+                    )
+                    db.add(log_entry)
+                    db.commit()
+                    log_id_val = log_entry.id
+                    if log_entry.timestamp:
+                        log_ts_str = log_entry.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                except Exception as e:
+                    logger.warning("Could not persist SyncLog entry: %s", e)
 
-            yield f"data: {json.dumps({'percent': 100, 'log': f' Sync execution complete! Synced {synced_count} customers, {synced_items_count} products, and {synced_invoices_count} invoices with {accuracy}% accuracy in {total_execution_time}s.', 'status': 'COMPLETED', 'summary': {'total': total_attempted, 'exec_time': total_execution_time, 'latency_ms': round((total_execution_time * 1000) / max(total_attempted, 1), 2), 'accuracy': accuracy}})}\n\n"
+            yield f"data: {json.dumps({'percent': 100, 'log': f' Sync execution complete! Synced {synced_count} customers, {synced_items_count} products, and {synced_invoices_count} invoices with {accuracy}% accuracy in {total_execution_time}s.', 'status': 'COMPLETED', 'summary': {'total': total_attempted, 'exec_time': total_execution_time, 'latency_ms': round((total_execution_time * 1000) / max(total_attempted, 1), 2), 'accuracy': accuracy, 'timestamp': log_ts_str, 'log_id': log_id_val}})}\n\n"
 
 
         else:
@@ -1112,6 +1141,8 @@ async def sync_live_stream(
                 accuracy = round((synced_count / max(synced_count + failed_count, 1)) * 100, 1)
                 total_execution_time = round(time.time() - start_time, 3)
                 
+                m2x_log_id = None
+                m2x_log_ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
                 if db:
                     try:
                         log_entry = SyncLog(
@@ -1123,10 +1154,13 @@ async def sync_live_stream(
                         )
                         db.add(log_entry)
                         db.commit()
+                        m2x_log_id = log_entry.id
+                        if log_entry.timestamp:
+                            m2x_log_ts = log_entry.timestamp.strftime("%Y-%m-%d %H:%M:%S")
                     except Exception as e:
                         logger.warning("Could not persist SyncLog entry: %s", e)
                 
-                yield f"data: {json.dumps({'percent': 100, 'log': f' Sync execution complete! Synced {synced_count} invoices with {accuracy}% accuracy in {total_execution_time}s.', 'status': 'COMPLETED', 'summary': {'total': synced_count + failed_count, 'invoices': synced_count, 'exec_time': total_execution_time, 'latency_ms': round((total_execution_time * 1000) / max(synced_count + failed_count, 1), 2), 'accuracy': accuracy}})}\n\n"
+                yield f"data: {json.dumps({'percent': 100, 'log': f' Sync execution complete! Synced {synced_count} invoices with {accuracy}% accuracy in {total_execution_time}s.', 'status': 'COMPLETED', 'summary': {'total': synced_count + failed_count, 'invoices': synced_count, 'exec_time': total_execution_time, 'latency_ms': round((total_execution_time * 1000) / max(synced_count + failed_count, 1), 2), 'accuracy': accuracy, 'timestamp': m2x_log_ts, 'log_id': m2x_log_id}})}\n\n"
 
     def event_generator() -> Generator[str, None, None]:
         from models.db import SessionLocal, MockDBSession, has_sqlalchemy
@@ -1179,6 +1213,7 @@ def run_spa_sync_in_background(
     target_account: str,
     user_id: int,
     since_date: Optional[str] = None,
+    board_id_2: Optional[str] = None,
 ):
     global SPA_LOGS
     SPA_LOGS.clear()
@@ -1393,7 +1428,7 @@ def run_spa_sync_in_background(
                 xero_conn = XeroConnector(tenant_id=tenant_id, oauth_handler=oauth_handler)
                 monday_conn = MondayConnector(api_key=monday_api_key)
 
-                contacts = xero_conn.get_contacts()
+                contacts = xero_conn.get_contacts(if_modified_since=cutoff_time)
                 if cutoff_time:
                     contacts = [c for c in contacts if parse_xero_date(c.get("UpdatedDateUTC")) is None or parse_xero_date(c.get("UpdatedDateUTC")) >= cutoff_time]
                 log(f" Retrieved {len(contacts)} contacts from Xero after filtering.")
@@ -1444,7 +1479,7 @@ def run_spa_sync_in_background(
                     time.sleep(0.1)
 
                 log(" Fetching products/items from Xero...")
-                items = xero_conn.get_items()
+                items = xero_conn.get_items(if_modified_since=cutoff_time)
                 if cutoff_time:
                     items = [it for it in items if parse_xero_date(it.get("UpdatedDateUTC")) is None or parse_xero_date(it.get("UpdatedDateUTC")) >= cutoff_time]
                 log(f" Retrieved {len(items)} products/items from Xero.")
@@ -1494,7 +1529,10 @@ def run_spa_sync_in_background(
                     time.sleep(0.1)
 
                 # Now sync Invoices (Xero -> Monday)
-                target_board_2 = "5101138242"
+                inv_mapping = db.query(FieldMapping).filter(FieldMapping.target_xero_path == "Invoice.InvoiceNumber").first() if db else None
+                default_inv_board = inv_mapping.board_id if inv_mapping else "5101138242"
+                target_board_2 = (board_id_2.strip() if board_id_2 and board_id_2.strip() else None) or default_inv_board
+
                 log(" Fetching invoices from Xero...")
                 time.sleep(0.1)
 
@@ -1502,25 +1540,28 @@ def run_spa_sync_in_background(
                     invoices = []
                     p = 1
                     while len(invoices) < batch_count:
-                        chunk = xero_conn.get_invoices(page=p)
+                        chunk = xero_conn.get_invoices(page=p, if_modified_since=cutoff_time)
                         if not chunk:
                             break
-                        invoices.extend(chunk)
+                        if cutoff_time:
+                            filtered_chunk = [
+                                inv for inv in chunk
+                                if (parse_xero_date(inv.get("UpdatedDateUTC") or inv.get("DateString") or inv.get("Date")) is None
+                                    or parse_xero_date(inv.get("UpdatedDateUTC") or inv.get("DateString") or inv.get("Date")) >= cutoff_time)
+                            ]
+                        else:
+                            filtered_chunk = chunk
+                        invoices.extend(filtered_chunk)
+                        if len(chunk) < 100:
+                            break
                         p += 1
                 except Exception as e:
                     log(f" Failed to fetch invoices from Xero: {e}", "ERROR")
                     return
 
-                if cutoff_time:
-                    invoices = [inv for inv in invoices if parse_xero_date(inv.get("UpdatedDateUTC")) is None or parse_xero_date(inv.get("UpdatedDateUTC")) >= cutoff_time]
-
                 total_invoices = len(invoices)
                 log(f" Retrieved {total_invoices} invoices from Xero.")
                 time.sleep(0.1)
-
-                # Load invoice mappings
-                inv_mapping = db.query(FieldMapping).filter(FieldMapping.target_xero_path == "Invoice.InvoiceNumber").first() if db else None
-                target_board_2 = inv_mapping.board_id if inv_mapping else "5101138242"
                 
                 col_types_b2 = {}
                 if monday_conn:
@@ -1995,6 +2036,7 @@ async def run_sync_from_spa(
     direction = payload.get("direction", "xero_to_monday")
     since_date = payload.get("since_date")
     board_id_1 = payload.get("board_id_1")
+    board_id_2 = payload.get("board_id_2") or "5101138242"
     board_id_3 = payload.get("board_id_3") or "5101138235"
     batch_count = int(payload.get("batch_count", 100))
     group_by_company = bool(payload.get("group_by_company", True))
@@ -2010,7 +2052,8 @@ async def run_sync_from_spa(
         group_by_company,
         target_account,
         user_id,
-        since_date
+        since_date,
+        board_id_2,
     )
     
     return Response(

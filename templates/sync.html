@@ -23,6 +23,20 @@
                     <p class="text-xs text-slate-500">Configure parameters for sync execution.</p>
                 </div>
 
+                <!-- Automated Incremental Sync Indicator -->
+                <div class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-indigo-950 uppercase tracking-wider">Automated Incremental Sync</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-800">
+                            Auto-Tracking
+                        </span>
+                    </div>
+                    <div class="text-xs font-mono font-semibold text-indigo-800" id="current-cutoff-display">
+                        {% if last_sync_time %}Last Synced: {{ last_sync_time.strftime('%Y-%m-%d %H:%M:%S') }} UTC{% else %}Status: Full sync (no prior cutoff){% endif %}
+                    </div>
+                    <span class="text-[10px] text-slate-500 mt-0.5 block">Automatically syncs only new and modified records since last sync.</span>
+                </div>
+
                 <div>
                     <label for="select-direction" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Synchronization Direction</label>
                     <select id="select-direction" onchange="toggleSyncFields()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-indigo-600 bg-white">
@@ -41,6 +55,11 @@
                     <div>
                         <label for="board_id_3" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Target Monday Board ID (Products)</label>
                         <input type="text" id="board_id_3" placeholder="Enter Product Board ID" value="5101138235"
+                            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-indigo-600">
+                    </div>
+                    <div>
+                        <label for="board_id_2" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Target Monday Board ID (Invoices)</label>
+                        <input type="text" id="board_id_2" placeholder="Enter Invoice Board ID" value="5101138242"
                             class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-indigo-600">
                     </div>
                 </div>
@@ -66,10 +85,13 @@
                 </div>
 
                 <div>
-                    <label for="input-sync-date" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Created / Updated On or After</label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="input-sync-date" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Backdate Sync (Optional)</label>
+                        <button type="button" onclick="clearSyncDate()" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer underline">Clear Date</button>
+                    </div>
                     <input type="date" id="input-sync-date"
                         class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-indigo-600 bg-white">
-                    <span class="text-[10px] text-slate-400">Optional: leave empty to sync all or from last sync</span>
+                    <span class="text-[10px] text-slate-400">Optional: leave empty to sync from last sync timestamp above. Choose a date only if you want to backdate.</span>
                 </div>
 
                 <div>
@@ -202,6 +224,11 @@ function toggleSyncFields() {
     }
 }
 
+function clearSyncDate() {
+    const d = document.getElementById("input-sync-date");
+    if (d) d.value = "";
+}
+
 // Run initially to ensure correct fields display
 document.addEventListener("DOMContentLoaded", toggleSyncFields);
 
@@ -215,6 +242,7 @@ function startLiveSync() {
     const direction = document.getElementById("select-direction").value;
     const count = document.getElementById("input-batch-count").value || 100;
     const board1 = document.getElementById("board_id_1").value;
+    const board2 = document.getElementById("board_id_2") ? document.getElementById("board_id_2").value : "5101138242";
     const board3 = document.getElementById("board_id_3").value;
     const mode = document.getElementById("select-mode").value;
     const account = document.getElementById("select-account").value;
@@ -234,7 +262,7 @@ function startLiveSync() {
         url += `&since_date=${encodeURIComponent(sinceDate)}`;
     }
     if (direction === "xero_to_monday") {
-        url += `&board_id_1=${encodeURIComponent(board1)}&board_id_3=${encodeURIComponent(board3)}`;
+        url += `&board_id_1=${encodeURIComponent(board1)}&board_id_2=${encodeURIComponent(board2)}&board_id_3=${encodeURIComponent(board3)}`;
     } else {
         url += `&group_by_company=${mode}&target_account=${account}`;
     }
@@ -270,6 +298,38 @@ function startLiveSync() {
                 btn.classList.remove("opacity-50", "cursor-not-allowed");
                 statusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase tracking-wider";
                 statusBadge.textContent = "COMPLETED";
+
+                // Dynamically update the Cutoff Indicator on the UI
+                if (data.summary && data.summary.timestamp) {
+                    const cutoffElem = document.getElementById("current-cutoff-display");
+                    if (cutoffElem) {
+                        cutoffElem.textContent = "Last Synced: " + data.summary.timestamp + " UTC";
+                    }
+
+                    // Dynamically prepend new audit entry into Recent Sync Log Audits table
+                    const tbody = document.querySelector("table tbody");
+                    if (tbody) {
+                        const emptyRow = tbody.querySelector("td[colspan]");
+                        if (emptyRow) emptyRow.closest("tr").remove();
+
+                        const tr = document.createElement("tr");
+                        tr.className = "hover:bg-slate-50/50 bg-emerald-50/40 transition-all duration-300";
+                        const logId = data.summary.log_id ? `#${data.summary.log_id}` : "#New";
+                        const cleanMsg = data.log ? data.log.replace(/^[> ]+/, '') : 'Sync execution completed.';
+                        tr.innerHTML = `
+                            <td class="px-4 py-3 font-mono font-semibold text-slate-700">${logId}</td>
+                            <td class="px-4 py-3 text-slate-500">${data.summary.timestamp}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
+                                    SUCCESS
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 font-mono font-bold text-slate-800">${data.summary.total || 0}</td>
+                            <td class="px-4 py-3 text-slate-600 font-mono text-[11px]">${cleanMsg}</td>
+                        `;
+                        tbody.insertBefore(tr, tbody.firstChild);
+                    }
+                }
             }
         } catch (e) {
             console.error("Error parsing SSE message:", e);

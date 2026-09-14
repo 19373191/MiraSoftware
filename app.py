@@ -1258,13 +1258,27 @@ def sync_stream():
             time.sleep(0.1)
 
             try:
-                invoices = xero_conn.get_invoices()
+                invoices = []
+                p = 1
+                while len(invoices) < batch_count:
+                    chunk = xero_conn.get_invoices(page=p, if_modified_since=cutoff_time)
+                    if not chunk:
+                        break
+                    if cutoff_time:
+                        filtered_chunk = [
+                            inv for inv in chunk
+                            if (parse_xero_date(inv.get("UpdatedDateUTC") or inv.get("DateString") or inv.get("Date")) is None
+                                or parse_xero_date(inv.get("UpdatedDateUTC") or inv.get("DateString") or inv.get("Date")) >= cutoff_time)
+                        ]
+                    else:
+                        filtered_chunk = chunk
+                    invoices.extend(filtered_chunk)
+                    if len(chunk) < 100:
+                        break
+                    p += 1
             except Exception as e:
                 yield f"data: {json.dumps({'percent': 90, 'log': f' Failed to fetch invoices from Xero: {e}', 'status': 'ERROR'})}\n\n"
                 return
-
-            if cutoff_time:
-                invoices = [inv for inv in invoices if parse_xero_date(inv.get("UpdatedDateUTC")) is None or parse_xero_date(inv.get("UpdatedDateUTC")) > cutoff_time]
 
             total_invoices = len(invoices)
             yield f"data: {json.dumps({'percent': 92, 'log': f' Retrieved {total_invoices} invoices from Xero.', 'status': 'IN_PROGRESS'})}\n\n"

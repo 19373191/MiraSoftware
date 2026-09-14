@@ -2,6 +2,7 @@
 Unit tests for M.I.R.A. Synchronization Control Panel & Sync Engine Router.
 """
 
+from datetime import datetime, timezone
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -183,6 +184,30 @@ class TestSyncRouter(unittest.TestCase):
             retrieved_log = next(msg for msg in logs_text if "Retrieved" in msg and "contacts" in msg)
             self.assertIn("0 contacts", retrieved_log)
 
+    @patch("requests.get")
+    def test_xero_connector_if_modified_since_header(self, mock_get):
+        """Verifies XeroConnector adds If-Modified-Since header when if_modified_since is passed."""
+        from connectors.xero_connector import XeroConnector
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"Invoices": [{"InvoiceNumber": "INV-0054"}]}
+        mock_get.return_value = mock_resp
+
+        mock_oauth = MagicMock()
+        mock_oauth.get_bearer_header.return_value = {"Authorization": "Bearer mock", "Xero-tenant-id": "mock-tenant"}
+
+        conn = XeroConnector(tenant_id="mock-tenant", oauth_handler=mock_oauth)
+        cutoff = datetime(2026, 9, 14, 0, 0, 0, tzinfo=timezone.utc)
+        invs = conn.get_invoices(if_modified_since=cutoff, page=1)
+
+        self.assertEqual(len(invs), 1)
+        self.assertEqual(invs[0]["InvoiceNumber"], "INV-0054")
+        mock_get.assert_called_once()
+        call_headers = mock_get.call_args[1]["headers"]
+        self.assertIn("If-Modified-Since", call_headers)
+        self.assertEqual(call_headers["If-Modified-Since"], "Mon, 14 Sep 2026 00:00:00 GMT")
+
 
 if __name__ == "__main__":
     unittest.main()
+
